@@ -1,0 +1,58 @@
+﻿@using Microsoft.AspNetCore.Identity
+
+
+@if(user == null)
+{
+    <h3>@message</h3>
+
+}
+else
+{
+    <div class="container">
+        <h3>Profile</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <label for="Id">Id</label>
+            </div>
+            <div class="col-md-8">
+                <input type="text" id="Id" class="form-control" value="@user.Id" disabled />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <label for="UserName">UserName</label>
+            </div>
+            <div class="col-md-8">
+                <input type="text" id="UserName" class="form-control" value="@user.UserName" disabled />
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <label for="Email">Email</label>
+            </div>
+            <div class="col-md-8">
+                <input type="text" id="Email" class="form-control" value="@user.Email" disabled />
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    ApplicationUser? user;
+    private string message = "Loading....";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var identityUser = await HttpClient.GetFromJsonAsync<IdentityUser>("api/account/profile");
+        if (identityUser != null)
+        {
+            user = new ApplicationUser
+                {
+                    Id = identityUser.Id,
+                    UserName = identityUser.UserName,
+                    Email = identityUser.Email
+                };
+        }
+    }
+        
+}
