@@ -15,6 +15,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+//builder.Services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true).AddEntityFrameworkStores<ApplicationDbContext>();
+
 //builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 //    .AddEntityFrameworkStores<ApplicationDbContext>()
 //    .AddDefaultTokenProviders();
@@ -89,9 +91,9 @@ app.UseStaticFiles(); // Serve static files from wwwroot
 app.UseHttpsRedirection();
 app.UseRouting(); 
 app.UseCors("AllowBlazor");
-app.UseAuthentication();
+
 app.UseAuthorization();
-app.MapCustomIdentityApi<ApplicationUser>();
+//app.MapIdentityApi<ApplicationUser>();
 app.MapControllers();
 app.MapHub<SignalRHub>("/signalRHub");
 app.MapFallbackToFile("index.html");

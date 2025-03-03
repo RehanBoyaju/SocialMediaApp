@@ -38,7 +38,27 @@ namespace ChatApp.API.Controllers
         public async Task<IActionResult> ProfileImage(string userId)
         {
             var user = await _context.Users.FindAsync(userId);
-            return File(user.ProfileImage, "image/jpeg");
+            string mimeType = GetMimeType(user.ProfileImage);
+            return File(user.ProfileImage, mimeType);
+        }
+        private string GetMimeType(byte[] imageData)
+        {
+            if (imageData.Length > 4)
+            {
+                // PNG: Starts with 89 50 4E 47 (‰PNG)
+                if (imageData[0] == 0x89 && imageData[1] == 0x50 &&
+                    imageData[2] == 0x4E && imageData[3] == 0x47)
+                {
+                    return "image/png";
+                }
+
+                // JPEG: Starts with FF D8 FF (ÿØÿ)
+                if (imageData[0] == 0xFF && imageData[1] == 0xD8 && imageData[2] == 0xFF)
+                {
+                    return "image/jpeg";
+                }
+            }
+            return "application/octet-stream"; // Fallback
         }
     }
 }

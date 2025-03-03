@@ -3,57 +3,64 @@
 @inject HttpClient HttpClient
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthProvider 
+@using Microsoft.AspNetCore.Components.Forms
 <h3>Login</h3>
 <PageTitle>Login</PageTitle>
-@if (!string.IsNullOrEmpty(Error))
-{
-    <div class="alert alert-danger" role="alert">
-        <strong>@Error</strong>
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-<EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="login">
-    <DataAnnotationsValidator/>
-    <ValidationSummary class="text-danger"/>
 
-    <div class="form-floating mb-3">
-        <InputText id="username" class="form-control" @bind-Value="loginModel.Email" autocomplete="current-password" aria-required="true"  placeholder="Username"/>
-        <label for="username">Username</label>
-        <ValidationMessage For="() => loginModel.Email" class="text-danger"/>
-    </div>  
-    <div class="form-floating mb-3">
-        <InputText type="password"  id="password" class="form-control" @bind-Value="loginModel.Password" autocomplete="current-password" aria-required="true" placeholder ="Password" />
-        <label for="password">Password</label>
-        <ValidationMessage For="() => loginModel.Password" class="text-danger"/>
-    </div>
-    @* <div class="checkbox mb-3"> *@
-    @*     <label class="form-label"> *@
-    @*         <InputCheckbox  class="darker-border-checkbox form-check-input" /> *@
-    @*         Remember me?" *@
-    @*     </label> *@
-    @* </div> *@
-    <div>
-        <button type="submit" class="btn btn-primary">Login</button>
-    </div>
-    <div>
-        <p>
-            <a href="ForgotPassword">Forgot your password?</a>
-        </p>
-        <p>
-            <a href="Register">Register as a new user</a>
-        </p>
-        <p>
-            <a href="ResendEmailConfirmation">Resend email confirmation</a>
-        </p>
+<div class="row">
+    <div class="col-lg-6">
+        @if (!string.IsNullOrEmpty(Error))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>@Error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }<EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="login">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="form-floating mb-3">
+                <InputText id="username" class="form-control" @bind-Value="loginModel.Username" autocomplete="current-password" aria-required="true" placeholder="Username" />
+                <label for="username">Username</label>
+                <ValidationMessage For="() => loginModel.Username" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText type="password" id="password" class="form-control" @bind-Value="loginModel.Password" autocomplete="current-password" aria-required="true" placeholder="Password" />
+                <label for="password">Password</label>
+                <ValidationMessage For="() => loginModel.Password" class="text-danger" />
+            </div>
+            @* <div class="checkbox mb-3"> *@
+            @*     <label class="form-label"> *@
+            @*         <InputCheckbox  class="darker-border-checkbox form-check-input" /> *@
+            @*         Remember me?" *@
+            @*     </label> *@
+            @* </div> *@
+            <div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </div>
+            <div>
+                <p>
+                    <a href="ForgotPassword">Forgot your password?</a>
+                </p>
+                <p>
+                    <a href="Register?returnUrl=/login">Register as a new user</a>
+                </p>
+                <p>
+                    <a href="ResendEmailConfirmation">Resend email confirmation</a>
+                </p>
+            </div>
+
+        </EditForm>
     </div>
     <div class="col-lg-4 col-lg-offset-2">
         <section>
-            <h3>Use another service to log in.</h3>
+            <h3>Use another service to login.</h3>
             <hr />
-            <ExternalLoginPicker/>
+            <ExternalLoginPicker />
         </section>
     </div>
-</EditForm>
+</div>
+
 @code {
     private LoginModel loginModel = new LoginModel();
     // [SupplyParameterFromQuery]

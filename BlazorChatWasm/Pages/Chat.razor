@@ -4,6 +4,7 @@
     @using Microsoft.AspNetCore.SignalR.Client
     @using System.Security.Claims
 @attribute [Authorize]
+<PageTitle>Chat</PageTitle>
     <h3>Chat</h3>
     <AuthorizeView>
         <Authorized>
@@ -28,13 +29,12 @@
                         <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user.Id)">
                             <div class="d-flex">
                                 <div class="mr-4 ">
-                                    <div class="avatar" style="height: 50px; width: 50px; background-color: #555; color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
-                                        <img src="@user.profileImageUrl" alt="pfp" height="50" width="50" />
+                                    <div class="avatar">
+                                        <img src="@user.profileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                 </div>
                                 <div>
                                     <p class="mb-0">@user.UserName</p>
-
                                 </div>
                             </div>
                         </li>
@@ -42,13 +42,14 @@
                     else
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user.Id)">
-                            <div class="d-flex">
+                            <div class="d-flex" >
                                 <div class="mr-4 ">
-                                    <div class="avatar" style="height: 50px; width: 50px; background-color: #1976d2; color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
+                                    <div class="avatar">
+                                        <img src="@user.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="mb-0">@user.Email</p>
+                                    <p class="mb-0">@user.UserName</p>
                                 </div>
                             </div>
                         </li>
@@ -65,9 +66,8 @@
                 {
                     <div class="d-flex flex-row m-2" style=" justify-content: flex-end;">
                         <div class="mr-4">
-                            <div class="avatar" style="height: 50px; width: 50px; background-color: #3f51b5; color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
-
-                                @msg.FromUser.Email.ToUpper().FirstOrDefault()
+                            <div class="avatar">
+                                <img src="@CurrentProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                             </div>
                         </div>
                         <div>
@@ -83,8 +83,8 @@
                 {
                     <div class="d-flex flex-row my-4">
                         <div class="mr-4">
-                            <div class="avatar" style="height: 50px; width: 50px; background-color: #555; color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;">
-                                @msg.FromUser.Email.ToUpper().FirstOrDefault()
+                            <div class="avatar">
+                                <img src="@ContactProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                             </div>
                         </div>
                         <div>
@@ -112,10 +112,21 @@
     [Parameter] public string ContactEmail { get; set; }
     [Parameter] public string ContactId { get; set; }
     private List<ChatMessage> messages = new List<ChatMessage>();
+    [Parameter] public string ContactProfileImageUrl { get; set; }
+    [Parameter] public string CurrentProfileImageUrl { get; set; }
     private async Task<string> GetProfile(string userId)
     {
-        var image = await HttpClient.GetByteArrayAsync($"api/account/{userId}/profileimage");
-        return $"data:image/jpeg;base64,{Convert.ToBase64String(image)}";
+        // var image = await HttpClient.GetByteArrayAsync($"api/account/{userId}/profileimage");
+        // return $"data:image/jpeg;base64,{Convert.ToBase64String(image)}";
+        var response = await HttpClient.GetAsync($"api/account/{userId}/profileimage");
+        if (response.IsSuccessStatusCode)
+        {
+            var image = await response.Content.ReadAsByteArrayAsync();
+            var mimeType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+
+            return $"data:{mimeType};base64,{Convert.ToBase64String(image)}";
+        }
+        throw new Exception("Failed to load image");    
     }
     private async Task SubmitAsync(string message)
     {
@@ -179,11 +190,14 @@
     async Task LoadUserChatAsync(string userId)
     {
         var contact = await chatService.GetUserDetailsAsync(userId);
+        contact.profileImageUrl = await GetProfile(userId);
         ContactId = contact.Id;
         ContactEmail = contact.Email;
         NavigationManager.NavigateTo($"chat/{ContactId}");
         messages = new List<ChatMessage>();
         messages = await chatService.GetConversationAsync(ContactId);
+        ContactProfileImageUrl = contact.profileImageUrl;
+        CurrentProfileImageUrl = await GetProfile(CurrentUserId);
     }
     private async Task GetUsersAsync()
     {

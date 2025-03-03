@@ -18,6 +18,11 @@
             <hr />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
+                <InputText @bind-Value="Input.Username" id="Input.Username" class="form-control" autocomplete="username" aria-required="true" placeholder="anon" />
+                <label for="Input.Username">Username</label>
+                <ValidationMessage For="() => Input.Username" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
                 <label for="Input.Email">Email</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
@@ -28,12 +33,54 @@
                 <ValidationMessage For="() => Input.Password" class="text-danger" />
             </div>
             <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
+                <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="anon@anon.com" />
                 <label for="Input.ConfirmPassword">Confirm Password</label>
                 <ValidationMessage For="() => Input.ConfirmPassword" class="text-danger" />
             </div>
+
+            @* <button @onclick="@ShowProfileImageModal" class="btn btn-outline-info m-3"> *@
+            @*     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-square" viewBox="0 0 16 16"> *@
+            @*         <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" /> *@
+            @*         <path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm12 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1v-1c0-1-1-4-6-4s-6 3-6 4v1a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z" /> *@
+            @*     </svg> *@
+            @*     <span>Upload Profile Photo</span> *@
+            @* </button> *@
+            <div class="form-floating mb-3">
+            <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpegm .png"></InputFile>
+            <label for="input.Profile">Upload your photo</label>
+            <ValidationMessage For="() => Input.ProfileImageUrl" class="text-danger"></ValidationMessage>
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="text-danger">@ErrorMessage</div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(ImagePreviewUrl))
+        {
+            <div>
+                <img src="@ImagePreviewUrl" alt="Profile Preview" class="img-thumbnail" />
+            </div>
+
+            @* @code { *@
+            @*     private async Task ShowProfileImageModal() *@
+            @*     { *@
+            @*             var modal = Modal.Show<PfpModal>("Choose a picture"); *@
+            @*             var modalResult = await modal.Result; // ✅ Wait for modal to close and get result *@
+
+            @*             if (!modalResult.Cancelled) *@
+            @*             { *@
+            @*                 Input.ProfileImageUrl = modalResult.Data?.ToString(); // ✅ Set the profile image *@
+            @*                 StateHasChanged(); *@
+            @*             } *@
+            @*     } *@
+            @*     private void HandleProfileImageSaved(string? imageUrl) *@
+            @*     { *@
+            @*             Input.ProfileImageUrl = imageUrl; *@
+            @*     } *@
+            }
+
             <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
             <a href="@ReturnUrl" class="btn btn-outline primary" role="button">Cancel</a>
+            <input type="hidden" @bind="ReturnUrl" />
         </EditForm>
     </div>
     <div class="col-lg-4 col-lg-offset-2">
@@ -47,51 +94,62 @@
 
 @code {
     InputModel Input = new InputModel();
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
-
     private string? Message => Input.Errors is null || Input.Errors.Length == 0 ? null : $"Error: {string.Join(", ", Input.Errors)}";
 
-    public class InputModel
-    {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; } = "";
-
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
-        public string Password { get; set; } = "";
-
-        [Required]
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm Password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string ConfirmPassword { get; set; } = "";
-
-        public string[] Errors { get; set; } = new string[0];
-    }
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; } = "/"; // Ensure it's public and has a default value
 
     private async Task RegisterAsync()
     {
+        if (ErrorMessage != null)
+        {
+            return;
+        }
         if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
         {
             var result = await customAuthProvider.RegisterAsync(new RegisterModel()
-            {
-                Email = Input.Email,
-                Password = Input.Password,
-            });
+                {
+                    Email = Input.Email,
+                    Username = Input.Username,
+                    Password = Input.Password,
+                    ProfileImageUrl = ImagePreviewUrl
+                });
 
             if (result.Succeeded)
             {
-                NavigationManager.NavigateTo(ReturnUrl??"/");
+                NavigationManager.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
             }
             else
             {
                 Input.Errors = result.Errors;
-
             }
         }
     }
+    private string? ImagePreviewUrl;
+    private string? ErrorMessage;
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg" && file.ContentType != "image/png")
+            {
+                ErrorMessage = "Only jpg, jpegs and pngs are allowed";
+                ImagePreviewUrl = null;
+                return;
+            }
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                ErrorMessage = "File size should be less than 2MB";
+                ImagePreviewUrl = null;
+                return;
+            }
+            ErrorMessage = null;
+            ImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
 }
+

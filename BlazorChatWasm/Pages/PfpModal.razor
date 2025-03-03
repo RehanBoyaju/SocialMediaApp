@@ -1,0 +1,76 @@
+﻿@using Blazored.Modal.Services
+@using Microsoft.AspNetCore.Components.Forms
+
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">Choose a Profile Picture</h5>
+        <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-floating mb-3">
+            <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg"></InputFile>
+            <label for="input.Profile">Upload your photo</label>
+            <ValidationMessage For="() => Input.ProfileImageUrl" class="text-danger"></ValidationMessage>
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="text-danger">@ErrorMessage</div>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(ImagePreviewUrl))
+        {
+            <div>
+                <img src="@ImagePreviewUrl" alt="Profile Preview" class="img-thumbnail" />
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+        <button type="button" class="btn btn-primary" @onclick="SaveProfileImage">Save</button>
+    </div>
+</div>
+
+@code {
+    private string? ImagePreviewUrl;
+    private string? ErrorMessage;
+    private InputModel Input { get; set; } = new InputModel();
+
+    [CascadingParameter] public BlazoredModalInstance ModalInstance { get; set; } // Inject ModalInstance to control the modal
+    [Parameter] public EventCallback<string?> OnImageSaved { get; set; }  // This is the callback parameter
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg")
+            {
+                ErrorMessage = "Only JPG and JPEG are allowed.";
+                ImagePreviewUrl = null;
+                return;
+            }
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                ErrorMessage = "File size should be less than 2MB.";
+                ImagePreviewUrl = null;
+                return;
+            }
+
+            ErrorMessage = null;
+            ImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task SaveProfileImage()
+    {
+        // When the "Save" button is clicked, call the parent callback to pass the image URL back
+        await OnImageSaved.InvokeAsync(ImagePreviewUrl); // Passing the image URL back to the parent
+        await ModalInstance.CloseAsync();  // Close the modal
+    }
+
+    private async Task CloseModal()
+    {
+        await ModalInstance.CloseAsync(); // Close the modal when the Close button is clicked
+    }
+}

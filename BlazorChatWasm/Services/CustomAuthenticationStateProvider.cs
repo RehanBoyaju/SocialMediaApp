@@ -96,7 +96,7 @@ namespace BlazorChatWasm.Services
                 var response = await httpClient.PostAsJsonAsync("register", registerModel);
                 if (response.IsSuccessStatusCode)
                 {
-                    return await LoginAsync(new LoginModel { Email = registerModel.Email, Password = registerModel.Password });
+                    return await LoginAsync(new LoginModel { Username = registerModel.Email, Password = registerModel.Password });
                 }
                 else
                 {
@@ -110,6 +110,28 @@ namespace BlazorChatWasm.Services
             }
             catch { }
 
+            return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
+        }
+        public async Task<FormResult> DeleteAsync()
+        {
+            try
+            {
+                var response = await httpClient.DeleteAsync("delete");
+                if (response.IsSuccessStatusCode)
+                {
+                    Logout();
+                    return new FormResult { Succeeded = true };
+                }
+                else
+                {
+                    var strResponse = await response.Content.ReadAsStringAsync();
+                    var jsonResponse = JsonNode.Parse(strResponse);
+                    var errorsObject = jsonResponse!["errors"]!.AsObject();
+                    var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
+                    return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
+                }
+            }
+            catch { }
             return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
         }
         //public async Task<byte[]> GetProfileImage(string userId)
