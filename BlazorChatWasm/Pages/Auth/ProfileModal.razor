@@ -21,36 +21,54 @@ else
                     <!-- Wrap img + icon in a container -->
                     <img src="@user.profileImageUrl" alt="pfp" height="100" width="100" class="rounded-circle" />
                     <!-- Hidden File Input (Label Triggers It) -->
-                    <input type="file" id="fileInput" style="visibility: hidden;" onchange="OnFileSelected" />
-                    <button type="button" class="btn edit-btn" @onclick="TriggerFileInput">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
-                        class="bi bi-pen edit-icon position-absolute" viewBox="0 0 16 16">
-                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
-                        </svg>
-                    </button>
+                    <InputFile  id="fileInput" style="display: none;" onchange="OnFileSelected" />
+
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" @onclick="TriggerFileInput" opacity="0.8"
+                    class="bi bi-pen edit-icon position-absolute" viewBox="0 0 16 16">
+                        <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                    </svg>
+
+
+
                 </div>
             </div>
         </div>
-        @if (!string.IsNullOrEmpty(ImagePreviewUrl))
-        {
-            <div class="d-flex justify-content-center">
-                <img src="@ImagePreviewUrl" alt="Profile Preview" height ="300" width="300" class="img-thumbnail" />
-            </div>
-        }
+        <div class="m-3">
+            @if (editPfp)
+            {
+                @if (!string.IsNullOrEmpty(ImagePreviewUrl))
+                {
+                    <div class="row mt-5">
+                        <h4 class="d-flex justify-content-center">Preview Image</h4>
+                    </div>
+                    <div class="d-flex justify-content-center m-3">
 
-        <div class="row">
-            <div class="col-md-3 mb-2">
+                        <img src="@ImagePreviewUrl" alt="Profile Preview" height="300" width="300" class="img-thumbnail" />
+
+                    </div>
+                    <div class="d-flex justify-content-center gap-4">
+                        <button @onclick="UpdateProfilePicture" class="btn btn-outline-primary">Save</button>
+                        <button @onclick="() => editPfp = false" class="btn btn-outline-danger">Cancel</button>
+                    </div>
+                }
+
+            }
+        </div>
+
+
+        <div class="row m-2">
+            <div class="col-md-3  d-flex align-items-center">
                 <label for="Id">UserId</label>
             </div>
-            <div class="col-md-8 mb-2">
+            <div class="col-md-8  d-flex align-items-center">
                 <input type="text" id="Id" class="form-control" value="@user.Id" disabled />
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-3 mb-2">
+        <div class="row m-2">
+            <div class="col-md-3 d-flex align-items-center">
                 <label for="UserName">Username</label>
             </div>
-            <div class="col-md-9 d-flex align-items-center gap-2 mb-2">
+            <div class="col-md-9 d-flex align-items-center gap-2">
                 @if (!editUser)
                 {
                     <input type="text" id="Username" class="form-control" value="@user.UserName" disabled />
@@ -75,8 +93,8 @@ else
                 }
             </div>
         </div>
-        <div class="row mb-2">
-            <div class="col-md-3">
+        <div class="row m-2">
+            <div class="col-md-3 d-flex align-items-center">
                 <label for="Email">Email</label>
             </div>
             <div class="col-md-9 d-flex align-items-center gap-2">
@@ -96,7 +114,7 @@ else
                 else
                 {
                     <input type="text" id="Email" class="form-control" @bind-value="updatedEmail" />
-                   <input type="file" id="fileInput" style="display: none;" onchange="OnFileSelected" accept=".jpg, .jpeg, .png" />
+                    <input type="file" id="fileInput" style="display: none;" onchange="OnFileSelected" accept=".jpg, .jpeg, .png" />
                     <!-- Edit Button -->
                     <button type="button" class="btn edit-btn" @onclick="TriggerFileInput">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
@@ -171,6 +189,7 @@ else
     private string updatedEmail = "";
     private bool changePassword = false;
     private string? ImagePreviewUrl;
+    private bool editPfp = false;
     [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
     ChangeModel changeModel = new ChangeModel();
 
@@ -186,7 +205,7 @@ else
     {
         if (AuthProvider is CustomAuthenticationStateProvider provider)
         {
-            var response = await provider.ChangePasswordAsync(user!.Email!, changeModel);
+            var response = await provider.ChangePasswordAsync(changeModel);
             if (response.Succeeded)
             {
                 await JS.InvokeVoidAsync("alert", "Password changed successfully!");
@@ -263,7 +282,6 @@ else
             {
                 Username = user!.UserName!,
                 Email = updatedEmail,
-                Password = user.PasswordHash!,
             };
         if (AuthProvider is CustomAuthenticationStateProvider customProvider)
         {
@@ -325,6 +343,33 @@ else
 
     private async Task TriggerFileInput()
     {
+        editPfp = true;
         await JS.InvokeVoidAsync("triggerFileInput");
+    }
+    private async Task UpdateProfilePicture()
+    {
+        UpdateModel updateModel = new UpdateModel
+            {
+                Username = user!.UserName!,
+                Email = user!.Email!,
+                ProfileImageUrl = ImagePreviewUrl
+            };
+        if (AuthProvider is CustomAuthenticationStateProvider customProvider)
+        {
+            var response = await customProvider.UpdateAsync(user.Email!, updateModel);
+            if (response.Succeeded)
+            {
+                editPfp = false;
+                user.profileImageUrl = ImagePreviewUrl!;
+                await JS.InvokeVoidAsync("alert", "Updated Pfp successfully");
+                ErrorMessage = new List<string>();
+            }
+            else
+            {
+                ErrorMessage = response.Errors!.ToList();
+                StateHasChanged();
+            }
+        }
+        
     }
 }

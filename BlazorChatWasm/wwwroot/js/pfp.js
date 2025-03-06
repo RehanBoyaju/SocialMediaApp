@@ -1,3 +1,4 @@
 ﻿window.triggerFileInput = function () {
-    document.getElementById("fileInput").click();
+    let fileInput = document.getElementById("fileInput");
+    fileInput.click();
 };

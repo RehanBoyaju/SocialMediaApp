@@ -154,11 +154,11 @@ namespace BlazorChatWasm.Services
                 return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
             }
         }
-        public async Task<FormResult> ChangePasswordAsync(string email, ChangeModel changeModel)
+        public async Task<FormResult> ChangePasswordAsync(ChangeModel changeModel)
         {
             try
             {
-                var response = await httpClient.PostAsJsonAsync($"changepassword/{email}", changeModel);
+                var response = await httpClient.PostAsJsonAsync($"changepassword", changeModel);
 
                 if (response.IsSuccessStatusCode)
                 {

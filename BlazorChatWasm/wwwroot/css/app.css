@@ -15,14 +15,15 @@ a, .btn-link {
     gap: 8px; /* Adjust spacing */
 }
 
+
 .btn-primary {
     color: #fff;
     background-color: #1b6ec2;
     border-color: #1861ac;
 }
 .edit-icon {
-    bottom: 5px; /* Adjust as needed */
-    right: 5px; /* Adjust as needed */
+    bottom: 1px; /* Adjust as needed */
+    right: 1px; /* Adjust as needed */
     background-color: white; /* Optional: adds a background for better visibility */
     border-radius: 40%;
     padding: 5px;

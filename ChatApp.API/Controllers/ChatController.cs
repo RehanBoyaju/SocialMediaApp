@@ -65,5 +65,19 @@ namespace ChatApp.API.Controllers
                     }).ToListAsync();
             return Ok(messages);
         }
+        [HttpGet("search/{contactId}/{searchTerm}")]
+        [Authorize]
+        public async Task<IActionResult> SearchAsync(string contactId,string searchTerm)
+        {
+            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+            var chats = await _context.ChatMessages
+                .Where(h => (h.FromUserId) == userId && (h.ToUserId == contactId) && h.Message.Contains(searchTerm))
+                .OrderBy(a => a.CreatedDate)
+                .Include(a => a.FromUser)
+                .Include(a => a.ToUser)
+                .ToListAsync();
+
+            return Ok(chats);
+        }
     }
 }
