@@ -14,8 +14,12 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text;
+using System.IO;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
 namespace ChatApp.API.Controllers
 {
     [Route("")]
@@ -52,8 +56,14 @@ namespace ChatApp.API.Controllers
             //await SendConfirmationEmailAsync(user, userManager, context, email);
             return TypedResults.Ok();
         }
-        private byte[] ConvertToByteArray(string base64String)
+        private byte[] ConvertToByteArray(string? base64String)
         {
+            string DefaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default.jpg");
+
+            if (string.IsNullOrEmpty(base64String))
+            {
+                return System.IO.File.Exists(DefaultImagePath) ? System.IO.File.ReadAllBytes(DefaultImagePath) : Array.Empty<byte>();
+            }
             // Remove the data prefix
             if (base64String.Contains(","))
             {
@@ -66,7 +76,7 @@ namespace ChatApp.API.Controllers
         public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginModel login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
             var user = await _userManager.FindByNameAsync(login.Username) ?? await _userManager.FindByEmailAsync(login.Username);
-            if(user == null)
+            if (user == null)
             {
                 return TypedResults.Problem("User not found", statusCode: StatusCodes.Status401Unauthorized);
             }
@@ -111,6 +121,79 @@ namespace ChatApp.API.Controllers
             }
             return TypedResults.Ok();
         }
+        [HttpPut("update/{email}")]
+
+        public async Task<IActionResult> UpdateUser(string email, [FromBody] UpdateModel updateModel)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+
+            // Check if the new username or email already exists (optional validation)
+            if ((await _userManager.FindByNameAsync(updateModel.Username)) != null && updateModel.Username != user.UserName)
+            {
+                return BadRequest("Username is already taken.");
+            }
+
+            if ((await _userManager.FindByEmailAsync(updateModel.Email)) != null && updateModel.Email != user.Email)
+            {
+                return BadRequest("Email is already taken.");
+            }
+
+            //// Change password properly
+            //if (!string.IsNullOrEmpty(updateModel.Password))
+            //{
+            //    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+            //    var passwordResult = await _userManager.ResetPasswordAsync(user, resetToken, updateModel.Password);
+
+            //    if (!passwordResult.Succeeded)
+            //    {
+            //        return BadRequest(passwordResult.Errors);
+            //    }
+            //}
+
+            // Update other fields
+            user.UserName = updateModel.Username;
+            user.Email = updateModel.Email;
+
+            // Update profile image only if provided
+            if (!string.IsNullOrEmpty(updateModel.ProfileImageUrl))
+            {
+                user.ProfileImage = ConvertToByteArray(updateModel.ProfileImageUrl);
+            }
+
+            try
+            {
+                var result = await _userManager.UpdateAsync(user);
+                if (!result.Succeeded)
+                {
+                    return BadRequest(result.Errors);
+                }
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Conflict("Another user has modified this record.");
+            }
+            await _signInManager.SignOutAsync();
+            return Ok("User updated successfully.");
+        }
+
+        [HttpPost("changepassword/{email}")]
+        public async Task<Results<Ok, ValidationProblem>> ChangePasswordAsync(ChangeModel changeModel)
+        {
+            var user = await _userManager.FindByIdAsync(changeModel.Id);
+            var result = await _userManager.ChangePasswordAsync(user, changeModel.OldPassword, changeModel.NewPassword);
+         
+            if(!result.Succeeded)
+            {
+                return CreateValidationProblem(result);
+            }
+
+            return TypedResults.Ok();
+        }
+
         private string GenerateToken(ApplicationUser user)
         {
             var claims = new[]
@@ -190,6 +273,33 @@ namespace ChatApp.API.Controllers
         [Required]
         public string Password { get; set; }
 
-        public string ProfileImageUrl { get; set; }
+        public string? ProfileImageUrl { get; set; }
+    }
+    public class UpdateModel
+    {
+        [Required]
+        [MinLength(3)]
+        public string Username { get; set; }
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        public string Password { get; set; }
+
+        public string? ProfileImageUrl { get; set; }
+    }
+    public class ChangeModel
+    {
+        public string Id { get; set; } = "";
+
+        [Required]
+        public string OldPassword { get; set; } = "";
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string NewPassword { get; set; } = "";
+        
     }
 }

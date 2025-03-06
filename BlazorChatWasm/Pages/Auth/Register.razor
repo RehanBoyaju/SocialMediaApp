@@ -46,7 +46,7 @@
             @*     <span>Upload Profile Photo</span> *@
             @* </button> *@
             <div class="form-floating mb-3">
-            <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpegm .png"></InputFile>
+            <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg, .png"></InputFile>
             <label for="input.Profile">Upload your photo</label>
             <ValidationMessage For="() => Input.ProfileImageUrl" class="text-danger"></ValidationMessage>
             @if (!string.IsNullOrEmpty(ErrorMessage))

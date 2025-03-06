@@ -1,10 +1,14 @@
-﻿using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models;
+using BlazorChatWasm.Models.Auth;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
+using static BlazorChatWasm.Pages.Auth.ProfileModal;
 
 namespace BlazorChatWasm.Services
 {
@@ -112,14 +116,52 @@ namespace BlazorChatWasm.Services
 
             return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
         }
-        public async Task<FormResult> DeleteAsync()
+        //public async Task<FormResult> DeleteAsync(string email)
+        //{
+        //    try
+        //    {
+        //        var response = await httpClient.DeleteAsync($"delete/{email}");
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            Logout();
+        //            return new FormResult { Succeeded = true };
+        //        }
+        //        else
+        //        {
+        //            var strResponse = await response.Content.ReadAsStringAsync();
+        //            var jsonResponse = JsonNode.Parse(strResponse);
+        //            var errorsObject = jsonResponse!["errors"]!.AsObject();
+        //            var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
+        //            return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
+        //        }
+        //    }
+        //    catch { }
+        //    return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
+        //}
+        public async Task<FormResult> UpdateAsync(string email,UpdateModel updateUser)
+        {
+            var response = await httpClient.PutAsJsonAsync($"update/{email}", updateUser);
+            if (response.IsSuccessStatusCode)
+            {
+                return new FormResult { Succeeded = true };
+            }
+            else
+            {
+                var strResponse = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JsonNode.Parse(strResponse);
+                var errorsObject = jsonResponse!["errors"]!.AsObject();
+                var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
+                return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
+            }
+        }
+        public async Task<FormResult> ChangePasswordAsync(string email, ChangeModel changeModel)
         {
             try
             {
-                var response = await httpClient.DeleteAsync("delete");
+                var response = await httpClient.PostAsJsonAsync($"changepassword/{email}", changeModel);
+
                 if (response.IsSuccessStatusCode)
                 {
-                    Logout();
                     return new FormResult { Succeeded = true };
                 }
                 else
@@ -131,8 +173,32 @@ namespace BlazorChatWasm.Services
                     return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
                 }
             }
-            catch { }
-            return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
+            catch
+            {
+
+            }
+            return new FormResult { Succeeded = false, Errors = new string[] { "Invalid password" } };
+        }
+
+
+
+        public async Task<FormResult> DeleteAsync(string email)
+        {
+            var response = await httpClient.DeleteAsync(email);
+            if (response.IsSuccessStatusCode)
+            {
+                Logout();
+                NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+                return new FormResult { Succeeded = true };
+            }
+            else
+            {
+                var strResponse = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JsonNode.Parse(strResponse);
+                var errorsObject = jsonResponse!["errors"]!.AsObject();
+                var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
+                return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
+            }
         }
         //public async Task<byte[]> GetProfileImage(string userId)
         //{

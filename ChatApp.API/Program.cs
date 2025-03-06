@@ -38,7 +38,7 @@ builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor",
-        policy => policy.WithOrigins("https://localhost:44338") // Add your Blazor WebAssembly origin
+        policy => policy.WithOrigins("http://192.168.254.6:8080", "http://localhost:8080", "http://localhost:5228") // Add your Blazor WebAssembly origin
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());
@@ -76,21 +76,28 @@ builder.Services.AddEndpointsApiExplorer();
 //});
 builder.Services.AddOpenApi();
 var app = builder.Build();
-ApplicationUser user = new ApplicationUser();
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwaggerUI(
-        c =>
-        {
-            c.SwaggerEndpoint("/openapi/v1.json","api");
-        });
-}
+//if (app.Environment.IsDevelopment())
+//{
+//    app.MapOpenApi();
+//    app.UseSwaggerUI(
+//        c =>
+//        {
+//            c.SwaggerEndpoint("/openapi/v1.json","api");
+//        });
+//}
+app.MapOpenApi();
+app.UseSwaggerUI(
+    c =>
+    {
+        c.SwaggerEndpoint("/openapi/v1.json", "api");
+    });
 app.UseStaticFiles(); // Serve static files from wwwroot
-app.UseHttpsRedirection();
-app.UseRouting(); 
+//app.UseHttpsRedirection();
+
+app.UseRouting();
 app.UseCors("AllowBlazor");
+
 
 app.UseAuthorization();
 //app.MapIdentityApi<ApplicationUser>();

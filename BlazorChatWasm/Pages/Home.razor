@@ -1,7 +1,12 @@
 ﻿@page "/"
 @page "/home"
 <PageTitle>Home</PageTitle>
+<AuthorizeView>
+    <Authorized>
+        My First Chat App
+    </Authorized>
+    <NotAuthorized>
+        <BlazorChatWasm.Pages.Auth.Login></BlazorChatWasm.Pages.Auth.Login>
+    </NotAuthorized>
+</AuthorizeView>
 
-<h1>Hello, world!</h1>
-
-Welcome to your new app.

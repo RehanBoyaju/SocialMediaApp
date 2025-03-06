@@ -1,38 +1,163 @@
 ﻿@using Microsoft.AspNetCore.Identity
-
-
-@if(user == null)
+@if (ErrorMessage != null)
+{
+    foreach (var error in ErrorMessage)
+    {
+        <p class="text-bg-danger">@error</p>
+    }
+}
+@if (user == null)
 {
     <h3>@message</h3>
 
 }
 else
 {
-    <div class="container">
-        <h3>Profile</h3>
-        <div class="row">
-            <div class="col-md-4">
-                <label for="Id">Id</label>
+    <div class="container p-4" style="border:1px solid black">
+
+        <div class="row mb-3 d-flex justify-content-center">
+            <div class="col text-center">
+                <div class="position-relative d-inline-block">
+                    <!-- Wrap img + icon in a container -->
+                    <img src="@user.profileImageUrl" alt="pfp" height="100" width="100" class="rounded-circle" />
+                    <!-- Hidden File Input (Label Triggers It) -->
+                    <input type="file" id="fileInput" style="visibility: hidden;" onchange="OnFileSelected" />
+                    <button type="button" class="btn edit-btn" @onclick="TriggerFileInput">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                        class="bi bi-pen edit-icon position-absolute" viewBox="0 0 16 16">
+                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
-            <div class="col-md-8">
+        </div>
+        @if (!string.IsNullOrEmpty(ImagePreviewUrl))
+        {
+            <div class="d-flex justify-content-center">
+                <img src="@ImagePreviewUrl" alt="Profile Preview" height ="300" width="300" class="img-thumbnail" />
+            </div>
+        }
+
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <label for="Id">UserId</label>
+            </div>
+            <div class="col-md-8 mb-2">
                 <input type="text" id="Id" class="form-control" value="@user.Id" disabled />
             </div>
         </div>
         <div class="row">
-            <div class="col-md-4">
-                <label for="UserName">UserName</label>
+            <div class="col-md-3 mb-2">
+                <label for="UserName">Username</label>
             </div>
-            <div class="col-md-8">
-                <input type="text" id="UserName" class="form-control" value="@user.UserName" disabled />
+            <div class="col-md-9 d-flex align-items-center gap-2 mb-2">
+                @if (!editUser)
+                {
+                    <input type="text" id="Username" class="form-control" value="@user.UserName" disabled />
+                    <button @onclick="() => {
+                        editUser = true;
+                        updatedUsername = user.UserName!;
+                    }">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
+                        </svg>
+                    </button>
+                }
+                else
+                {
+                    <input type="text" id="Username" class="form-control" @bind-value="updatedUsername" />
+                    <button @onclick="EditUsername" class="btn btn-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-circle" viewBox="0 0 16 16">
+                            <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16" />
+                            <path d="m10.97 4.97-.02.022-3.473 4.425-2.093-2.094a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05" />
+                        </svg>
+                    </button>
+                }
             </div>
         </div>
-        <div class="row">
-            <div class="col-md-4">
+        <div class="row mb-2">
+            <div class="col-md-3">
                 <label for="Email">Email</label>
             </div>
-            <div class="col-md-8">
-                <input type="text" id="Email" class="form-control" value="@user.Email" disabled />
+            <div class="col-md-9 d-flex align-items-center gap-2">
+
+                @if (!editEmail)
+                {
+                    <input type="text" id="Email" class="form-control" value="@user.Email" disabled />
+                    <button @onclick="() => {
+                        editEmail = true;
+                        updatedEmail = user.Email!;
+                    }">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pen" viewBox="0 0 16 16">
+                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
+                        </svg>
+                    </button>
+                }
+                else
+                {
+                    <input type="text" id="Email" class="form-control" @bind-value="updatedEmail" />
+                   <input type="file" id="fileInput" style="display: none;" onchange="OnFileSelected" accept=".jpg, .jpeg, .png" />
+                    <!-- Edit Button -->
+                    <button type="button" class="btn edit-btn" @onclick="TriggerFileInput">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                        class="bi bi-pen edit-icon position-absolute" viewBox="0 0 16 16">
+                            <path d="m13.498.795.149-.149a1.207 1.207 0 1 1 1.707 1.708l-.149.148a1.5 1.5 0 0 1-.059 2.059L4.854 14.854a.5.5 0 0 1-.233.131l-4 1a.5.5 0 0 1-.606-.606l1-4a.5.5 0 0 1 .131-.232l9.642-9.642a.5.5 0 0 0-.642.056L6.854 4.854a.5.5 0 1 1-.708-.708L9.44.854A1.5 1.5 0 0 1 11.5.796a1.5 1.5 0 0 1 1.998-.001m-.644.766a.5.5 0 0 0-.707 0L1.95 11.756l-.764 3.057 3.057-.764L14.44 3.854a.5.5 0 0 0 0-.708z" />
+                        </svg>
+                    </button>
+                }
             </div>
+
+        </div>
+
+
+        <div class="row mt-5">
+            <div class="col-md-12">
+                @if (ErrorMessage.Count>0)
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @foreach (var msg in ErrorMessage)
+                        {
+                            <p class="alert-danger">@msg</p>
+                        }
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (changePassword)
+                {
+                    <EditForm Model="changeModel" method="post" OnValidSubmit="ChangePasswordAsync" FormName="change">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+                        <div class="m-3">
+                            <h3>Change your password</h3>
+                        </div>
+                        <div class=" form-floating mb-3">
+                            <InputText type="password" id="OldPassword" class="form-control" @bind-Value="changeModel.OldPassword" autocomplete="old-password" placeholder="Old Password"></InputText>
+                            <label for="OldPassword">Enter old password:</label>
+                            <ValidationMessage For="() => changeModel.OldPassword" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputText type="password" id="NewPassword" class="form-control" @bind-Value="changeModel.NewPassword" autocomplete="new-password" placeholder="New Password"></InputText>
+                            <label for="NewPassword">Enter new password:</label>
+                            <ValidationMessage For="() => changeModel.NewPassword" class="text-danger" />
+                        </div>
+                        <div class="form-floating mb-3">
+                            <InputText type="password" id="ConfirmPassword" class="form-control" @bind-Value="changeModel.ConfirmPassword" autocomplete="new-password" placeholder="Confirm Password"></InputText>
+                            <label for="ConfirmPassword">Confirm password:</label>
+                            <ValidationMessage For="() => changeModel.ConfirmPassword" class="text-danger" />
+                        </div>
+                        <div class="d-flex align-content-center justify-content-center gap-3">
+                            <button type="submit" class="w-20 btn btn btn-primary">Reset</button>
+                            <button @onclick="() => changePassword = !changePassword" class="w-20 btn btn btn-outline-danger">Cancel</button>
+                        </div>
+                    </EditForm>
+
+                }
+            </div>
+        </div>
+        <div class="d-flex justify-content-center mt-3 gap-4">
+            <button class="btn btn-outline-secondary" @onclick="ShowChangePassword">Reset Password</button>
+            <button class="btn btn-outline-danger" @onclick="Logout">Logout</button>
+            <button class="btn btn-outline-danger" @onclick="Delete">Delete</button>
         </div>
     </div>
 }
@@ -40,19 +165,166 @@ else
 @code {
     ApplicationUser? user;
     private string message = "Loading....";
+    private bool editUser = false;
+    private bool editEmail = false;
+    private string updatedUsername = "";
+    private string updatedEmail = "";
+    private bool changePassword = false;
+    private string? ImagePreviewUrl;
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    ChangeModel changeModel = new ChangeModel();
+
+
+    List<string> ErrorMessage = new List<string>();
+
+    private void ShowChangePassword()
+    {
+        changePassword = !changePassword;
+        changeModel.Id = user!.Id;
+    }
+    private async Task ChangePasswordAsync()
+    {
+        if (AuthProvider is CustomAuthenticationStateProvider provider)
+        {
+            var response = await provider.ChangePasswordAsync(user!.Email!, changeModel);
+            if (response.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", "Password changed successfully!");
+                changePassword = false;
+                changeModel = new ChangeModel(); // Reset the model
+            }
+            else
+            {
+                ErrorMessage = response.Errors!.ToList();
+                StateHasChanged();
+            }
+        }
+
+    }
+    private async Task EditUsername()
+    {
+        UpdateModel updateModel = new UpdateModel
+            {
+                Username = updatedUsername,
+                Email = user!.Email!,
+            };
+        if (AuthProvider is CustomAuthenticationStateProvider customProvider)
+        {
+            var response = await customProvider.UpdateAsync(user.Email!, updateModel);
+            if (response.Succeeded)
+            {
+                user.UserName = updatedUsername;
+                editUser = false;
+                await JS.InvokeVoidAsync("alert", "Updated Username successfully");
+                ErrorMessage = new List<string>();
+            }
+            else
+            {
+                ErrorMessage = response.Errors!.ToList();
+                StateHasChanged();
+            }
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        var identityUser = await HttpClient.GetFromJsonAsync<IdentityUser>("api/account/profile");
-        if (identityUser != null)
+        user = await HttpClient.GetFromJsonAsync<ApplicationUser>("api/account/profile");
+
+        if (user == null)
         {
-            user = new ApplicationUser
-                {
-                    Id = identityUser.Id,
-                    UserName = identityUser.UserName,
-                    Email = identityUser.Email
-                };
+            message = "You must be logged in to access this page.";
+            NavigationManager.NavigateTo("login");
+        }
+        else
+        {
+
+            user.profileImageUrl = await GetProfile(user.Id);
+
+        }
+
+    }
+    private async Task<string> GetProfile(string userId)
+    {
+        // var image = await HttpClient.GetByteArrayAsync($"api/account/{userId}/profileimage");
+        // return $"data:image/jpeg;base64,{Convert.ToBase64String(image)}";
+        var response = await HttpClient.GetAsync($"api/account/{userId}/profileimage");
+        if (response.IsSuccessStatusCode)
+        {
+            var image = await response.Content.ReadAsByteArrayAsync();
+            var mimeType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
+
+            return $"data:{mimeType};base64,{Convert.ToBase64String(image)}";
+        }
+        throw new Exception("Failed to load image");
+    }
+    private async Task EditEmail()
+    {
+        UpdateModel updateModel = new UpdateModel
+            {
+                Username = user!.UserName!,
+                Email = updatedEmail,
+                Password = user.PasswordHash!,
+            };
+        if (AuthProvider is CustomAuthenticationStateProvider customProvider)
+        {
+            var response = await customProvider.UpdateAsync(user.Email!, updateModel);
+            if (response.Succeeded)
+            {
+                user.Email = updatedEmail;
+                editEmail = false;
+                await JS.InvokeVoidAsync("alert", "Updated Email successfully");
+                ErrorMessage = new List<string>();
+            }
+            else
+            {
+                ErrorMessage = response.Errors!.ToList();
+                StateHasChanged();
+            }
         }
     }
-        
+    private void Logout()
+    {
+        if (AuthProvider is CustomAuthenticationStateProvider provider)
+        {
+            provider.Logout();
+            NavigationManager.NavigateTo("/");
+        }
+    }
+    private async Task Delete()
+    {
+        if (AuthProvider is CustomAuthenticationStateProvider provider)
+        {
+            await provider.DeleteAsync(user!.Email!);
+            NavigationManager.NavigateTo("/");
+        }
+    }
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        ErrorMessage = new List<string>();
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg" && file.ContentType != "image/png")
+            {
+                ErrorMessage.Add("Only jpg, jpegs and pngs are allowed");
+                ImagePreviewUrl = null;
+                return;
+            }
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                ErrorMessage.Add("File size should be less than 2MB");
+                ImagePreviewUrl = null;
+                return;
+            }
+            ErrorMessage = new List<string>();
+            ImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task TriggerFileInput()
+    {
+        await JS.InvokeVoidAsync("triggerFileInput");
+    }
 }

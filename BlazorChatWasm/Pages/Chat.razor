@@ -98,22 +98,22 @@
         </div>
         <div class="d-flex flex-row px-2 mx-4 mt-2">
             <InputText Placeholder="Enter Your Message..." class="mt-n2 mx-4 flex-grow-1" @bind-Value="CurrentMessage" @oninput="OnInputChanged"  @onkeydown="HandleKeyDown"/>
-            <button type="submit" class="btn btn-primary" @onclick="() => SubmitAsync(CurrentMessage)">Send</button>
+            <button type="submit" class="btn btn-primary" @onclick="() => SubmitAsync(CurrentMessage!)">Send</button>
         </div>
     </div>
 </div>
 @code
 {
-    [CascadingParameter] public HubConnection hubConnection { get; set; }
-    [Parameter] public string CurrentMessage { get; set; }
-    [Parameter] public string CurrentUserId { get; set; }
-    [Parameter] public string CurrentUserEmail { get; set; }
+    [CascadingParameter] public HubConnection? hubConnection { get; set; }
+    [Parameter] public string? CurrentMessage { get; set; }
+    [Parameter] public string? CurrentUserId { get; set; }
+    [Parameter] public string? CurrentUserEmail { get; set; }
     public List<ApplicationUser> ChatUsers = new List<ApplicationUser>();
-    [Parameter] public string ContactEmail { get; set; }
-    [Parameter] public string ContactId { get; set; }
+    [Parameter] public string? ContactEmail { get; set; } 
+    [Parameter] public string? ContactId { get; set; }
     private List<ChatMessage> messages = new List<ChatMessage>();
-    [Parameter] public string ContactProfileImageUrl { get; set; }
-    [Parameter] public string CurrentProfileImageUrl { get; set; }
+    [Parameter] public string? ContactProfileImageUrl { get; set; }
+    [Parameter] public string? CurrentProfileImageUrl { get; set; }
     private async Task<string> GetProfile(string userId)
     {
         // var image = await HttpClient.GetByteArrayAsync($"api/account/{userId}/profileimage");
@@ -134,7 +134,7 @@
         {
             var chatHistory = new ChatMessage()
                     {
-                        FromUserId = CurrentUserId,
+                        FromUserId = CurrentUserId!,
                         Message = message,
                         ToUserId = ContactId,
                         CreatedDate = DateTime.Now
@@ -142,7 +142,7 @@
             await chatService.SaveMessageAsync(chatHistory);
             CurrentMessage = string.Empty;
             StateHasChanged();
-            await hubConnection.SendAsync("SendMessageAsync", chatHistory, CurrentUserEmail);
+            await hubConnection!.SendAsync("SendMessageAsync", chatHistory, CurrentUserEmail);
 
         }
     }
@@ -151,7 +151,7 @@
         if (hubConnection == null)
         {
             hubConnection = new HubConnectionBuilder()
-            .WithUrl(new Uri(HttpClient.BaseAddress, "/signalRHub"))
+            .WithUrl(new Uri(HttpClient.BaseAddress!, "/signalRHub"))
             .Build();
 
         }
@@ -197,7 +197,7 @@
         messages = new List<ChatMessage>();
         messages = await chatService.GetConversationAsync(ContactId);
         ContactProfileImageUrl = contact.profileImageUrl;
-        CurrentProfileImageUrl = await GetProfile(CurrentUserId);
+        CurrentProfileImageUrl = await GetProfile(CurrentUserId!);
     }
     private async Task GetUsersAsync()
     {

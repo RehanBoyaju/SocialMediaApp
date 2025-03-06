@@ -12,36 +12,59 @@
         <div class="top-row px-4">
             <AuthorizeView>
                 <Authorized>
-                    <button @onclick="@(()=>Modal.Show<ProfileModal>("About User"))" class="btn btn-outline-info m-3">
+                    <button @onclick="ShowModal" class="btn btn-outline-info m-3">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
                             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z" />
                         </svg>Hello @context?.User?.Identity?.Name
                     </button>
+
                     <button class="btn btn-outline-primary" @onclick="Logout">Logout</button>
                 </Authorized>
                 <NotAuthorized>
                     <a class="btn btn-primary" href="/register?returnUrl=/home">Register</a>
                     <a class="btn btn-primary" href="Login">Log in</a>
+                    
                 </NotAuthorized>
             </AuthorizeView>
         </div>
 
         <article class="content px-4">
+
             <CascadingValue Value="hubConnection">
                 @Body
             </CascadingValue>
+
         </article>
     </main>
 </div>
-@using System.Security.Claims
 @code {
-    public HubConnection hubConnection;
-    public bool IsConnected => hubConnection.State == HubConnectionState.Connected;
+    public HubConnection? hubConnection;
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
+    public bool IsConnected => hubConnection!.State == HubConnectionState.Connected;
     string CurrentUserId = "";
-
+    private async Task ShowModal()
+    {
+        var profileModal = Modal.Show<ProfileModal>("User Details");
+        var result = await profileModal.Result;
+        if (result.Cancelled)
+        {
+            Console.WriteLine("Modal was cancelled");
+        }
+        else if (result.Confirmed)
+        {
+            Console.WriteLine("Modal was closed");
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         await InitializeSignalRConnection();
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+        }
     }
 
     private async Task InitializeSignalRConnection()
@@ -49,11 +72,11 @@
         if (hubConnection != null)
         {
             await hubConnection.StopAsync();
-            hubConnection.DisposeAsync();
+            await hubConnection.DisposeAsync();
         }
 
         hubConnection = new HubConnectionBuilder()
-            .WithUrl(new Uri(HttpClient.BaseAddress, "/signalRHub"))
+            .WithUrl(new Uri(HttpClient.BaseAddress!, "/signalRHub"))
             .Build();
 
         hubConnection.On<string, string, string>("ReceiveChatNotification", async (message, receiverUserId, senderUserId) =>
@@ -82,13 +105,14 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            var state = await AuthProvider.GetAuthenticationStateAsync();
-            var user = state.User;
-            CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        }
+    // protected override async Task OnAfterRenderAsync(bool firstRender)
+    // {
+    //     if (firstRender)
+    //     {
+    //         var state = await AuthProvider.GetAuthenticationStateAsync();
+    //         var user = state.User;
+    //         CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
+
+    //     }
     }
-}
+

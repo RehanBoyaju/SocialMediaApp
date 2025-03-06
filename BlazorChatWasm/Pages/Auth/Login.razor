@@ -63,8 +63,8 @@
 
 @code {
     private LoginModel loginModel = new LoginModel();
-    // [SupplyParameterFromQuery]
-    // private string? ReturnUrl { get; set; }
+    [SupplyParameterFromQuery]
+    private string? ReturnUrl { get; set; }
 
     private string Error = "";
     public async Task HandleLogin()
