@@ -71,7 +71,7 @@ namespace ChatApp.API.Controllers
         {
             var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
             var chats = await _context.ChatMessages
-                .Where(h => (h.FromUserId) == userId && (h.ToUserId == contactId) && h.Message.Contains(searchTerm))
+                .Where(h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) )&& h.Message.Contains(searchTerm))
                 .OrderBy(a => a.CreatedDate)
                 .Include(a => a.FromUser)
                 .Include(a => a.ToUser)

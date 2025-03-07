@@ -21,8 +21,9 @@ namespace BlazorChatWasm.Services
         }
         public async Task<ApplicationUser> GetUserDetailsAsync(string userId)
         {
+            var pfp = await GetProfile(userId);
             var data = await _httpClient.GetFromJsonAsync<ApplicationUser>($"api/chat/users/{userId}");
-            data!.profileImageUrl = await GetProfile(userId);
+            data!.profileImageUrl = pfp;
             return data;
         }
         public async Task<List<ApplicationUser>> GetUsersAsync()

@@ -10,140 +10,158 @@
         You are not authorized
     </NotAuthorized>
 </AuthorizeView>
-<div class="d-flex flex-grow-1 flex-row">
-    <div class="d-flex flex-column px-4" style="max-height:90vh;min-height:90vh; overflow:auto;">
-        <ul class="list-group">
-            Online Users:
-            @if (ChatUsers != null)
-            {
-                @foreach (var user in ChatUsers)
+@if(Contact== null || ChatUsers.Count == 0)
+{
+    <em>Loading...</em>
+}
+else
+{
+    <div class="d-flex flex-grow-1 flex-row">
+        <div class="d-flex flex-column px-4" style="max-height:90vh;min-height:90vh; overflow:auto;">
+            <ul class="list-group">
+                Online Users:
+                @if (ChatUsers != null)
                 {
-                    @if (user.Id != Contact.Id)
+                    @foreach (var user in ChatUsers)
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user.Id)">
-                            <div class="d-flex">
-                                <div class="mr-4 ">
-                                    <div class="avatar">
-                                        <img src="@user.profileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                        @if (user.Id != Contact.Id)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user)">
+                                <div class="d-flex">
+                                    <div class="mr-4 ">
+                                        <div class="avatar">
+                                            <img src="@user.profileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0">@user.UserName</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="mb-0">@user.UserName</p>
-                                </div>
-                            </div>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user.Id)">
-                            <div class="d-flex">
-                                <div class="mr-4 ">
-                                    <div class="avatar">
-                                        <img src="@user.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user)">
+                                <div class="d-flex">
+                                    <div class="mr-4 ">
+                                        <div class="avatar">
+                                            <img src="@user.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0">@user.UserName</p>
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="mb-0">@user.UserName</p>
-                                </div>
-                            </div>
-                        </li>
+                            </li>
+                        }
                     }
-                }
-            }
-            else
-            {
-                <li><i>Loading Users....</i></li>
-            }
-        </ul>
-    </div>
-    <div class="d-flex flex-column px-4 flex-grow-1" style="max-height:70vh;min-height:70vh;">
-        <nav class="navbar navbar-expand-lg bg-body-secondary">
-            <div class="container-fluid">
-                <div class="d-inline-flex align-items-center gap-3 ms-3">
-                    <div class="avatar">
-                        <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                    </div>
-                    <span>@Contact.Email</span>
-                </div>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <form class="d-flex" role="search" style="margin-left:auto">
-                        <InputText class="form-control me-2" type="search" placeholder="Search Message.." aria-label="Search" @bind-Value="SearchTerm" />
-                        <button class="btn btn-primary" @onclick="Search"></button>
-                    </form>
-                </div>
-            </div>
-        </nav>
-        <div style="max-height:60vh;min-height:60vh; overflow-y:scroll;" id="chatContainer" class="body bg-body-tertiary">
-            @foreach (var msg in messages)
-            {
-                if (msg.FromUserId == CurrentUserId)
-                {
-                    <div class="d-flex flex-row m-2" style=" justify-content: flex-end;">
-                        <div class="mr-4">
-                            <div class="avatar">
-                                <img src="@CurrentProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                            </div>
-                        </div>
-                        <div>
-                            <p class="mb-0">You</p>
-                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
-
-                            <p class="mt-2" style="padding: 15px; background-color: #1976d2 ; border-radius: 5px;">@msg.Message</p>
-
-                        </div>
-                    </div>
                 }
                 else
                 {
-                    <div class="d-flex flex-row my-4">
-                        <div class="mr-4">
-                            <div class="avatar">
-                                <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                            </div>
+                    <li><i>Loading Users....</i></li>
+                }
+            </ul>
+        </div>
+        <div class="d-flex flex-column px-4 flex-grow-1" style="max-height:90vh;min-height:90vh;">
+            <nav class="navbar navbar-expand-lg bg-body-secondary">
+                <div class="container-fluid">
+                    <div class="d-inline-flex align-items-center gap-3 ms-3">
+                        <div class="avatar">
+                            <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                         </div>
-                        <div>
-                            <p class="mb-0">@msg.FromUser.UserName</p>
-                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
-                            <p class="mt-2" style="padding: 15px; background-color: #f4f4f4; border-radius: 5px;">@msg.Message</p>
+                        <span>@Contact.Email</span>
+                    </div>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                        <div class="d-flex gap-2" role="search" style="margin-left:auto" onsubmit="Search">
+                            <InputText class="form-control me-2" type="search" placeholder="Search Message.." aria-label="Search" @bind-Value="SearchTerm" @oninput="HandleSearchInput" @onkeydown="HandleSearch" />
+                            <button @onclick="Search" class="btn btn-primary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                    <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                                </svg>
+                            </button>
+                            @if(Searching)
+                            {
+                                <button @onclick="() => {Searching = false; }" class="btn btn-outline-danger">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
+                                        <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z" />
+                                    </svg>
+                                </button>
+                            }
                         </div>
                     </div>
+                </div>
+            </nav>
+            <div style="max-height:69vh;min-height:69vh; overflow-y:scroll" id="chatContainer" class="body bg-body-tertiary">
+                @foreach (var msg in Searching?SearchResults:messages)
+                {
+                    if (msg.FromUserId == CurrentUser.Id)
+                    {
+                        <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
+                            <div class="mr-4">
+                                <div class="avatar">
+                                    <img src="@CurrentUser.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                </div>
+                            </div>
+                            <div>
+                                <p class="mb-0">You</p>
+                                <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+
+                                <p class="mt-2" style="padding: 15px; background-color: #1976d2 ; border-radius: 5px;">@msg.Message</p>
+
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-row my-4" style="padding-left:2vw">
+                            <div class="mr-4">
+                                <div class="avatar">
+                                    <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                </div>
+                            </div>
+                            <div>
+                                <p class="mb-0">@msg.FromUser.UserName</p>
+                                <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+                                <p class="mt-2" style="padding: 15px; background-color: #f4f4f4; border-radius: 5px;">@msg.Message</p>
+                            </div>
+                        </div>
+                    }
                 }
-            }
-        </div>
-        <div class="d-flex flex-row px-2 mx-4 mt-2">
-            <InputText Placeholder="Enter Your Message..." class="mt-n2 mx-4 flex-grow-1" @bind-Value="CurrentMessage" @oninput="OnInputChanged" @onkeydown="HandleKeyDown" />
-            <button type="submit" class="btn btn-primary" @onclick="() => SubmitAsync(CurrentMessage!)">Send</button>
+            </div>
+            <div class="d-flex flex-row px-2 p-3 bg-body-secondary" >
+                <InputText Placeholder="Enter Your Message..." class="mt-n2 mx-4 flex-grow-1" @bind-Value="CurrentMessage" @oninput="OnInputChanged" @onkeydown="HandleKeyDown" />
+                <button type="submit" class="btn btn-primary" @onclick="() => SubmitAsync(CurrentMessage!)">Send</button>
+            </div>
         </div>
     </div>
-</div>
+}
 @code
 {
     [CascadingParameter] public HubConnection? hubConnection { get; set; }
-    public string? CurrentMessage { get; set; }
-    public string? CurrentUserId { get; set; }
-    public string? CurrentUserEmail { get; set; }
-    public string? CurrentProfileImageUrl { get; set; }
-    public string? SearchTerm = "";
     [Parameter]
     public string? ContactId { get; set; }
-    public List<ChatMessage> SearchResults = new List<ChatMessage>();
+    public string? CurrentId { get; set; }
+    public string? CurrentMessage { get; set; }
+    private bool Searching = false;
+    public string? SearchTerm = "";
 
+    public List<ChatMessage> SearchResults = new List<ChatMessage>();
     public List<ApplicationUser> ChatUsers = new List<ApplicationUser>();
     private List<ChatMessage> messages = new List<ChatMessage>();
 
-    ApplicationUser Contact = new ApplicationUser();
-
+    ApplicationUser? Contact = null;
+    ApplicationUser CurrentUser = new ApplicationUser();
 
     private async Task SubmitAsync(string message)
     {
-        if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(Contact.Id))
+        if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(Contact!.Id))
         {
             var chatHistory = new ChatMessage()
                 {
-                    FromUserId = CurrentUserId!,
+                    FromUserId = CurrentUser.Id!,
                     Message = message,
                     ToUserId = Contact.Id,
                     CreatedDate = DateTime.Now
@@ -151,7 +169,7 @@
             await chatService.SaveMessageAsync(chatHistory);
             CurrentMessage = string.Empty;
             StateHasChanged();
-            await hubConnection!.SendAsync("SendMessageAsync", chatHistory, CurrentUserEmail);
+            await hubConnection!.SendAsync("SendMessageAsync", chatHistory, CurrentUser.Email);
 
         }
     }
@@ -170,15 +188,15 @@
         }
         hubConnection.On<ChatMessage, string>("ReceiveMessage", async (message, userName) =>
         {
-            if ((Contact.Id == message.ToUserId && CurrentUserId == message.FromUserId) || (Contact.Id == message.FromUserId && CurrentUserId == message.ToUserId))
+            if ((Contact!.Id == message.ToUserId && CurrentUser.Id == message.FromUserId) || (Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
             {
 
-                if ((Contact.Id == message.ToUserId && CurrentUserId == message.FromUserId))
+                if ((Contact.Id == message.ToUserId && CurrentUser.Id == message.FromUserId))
                 {
-                    messages.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = new ApplicationUser() { Id = CurrentUserId, Email = CurrentUserEmail }, FromUserId = CurrentUserId });
-                    await hubConnection.SendAsync("ChatNotificationAsync", $"New Message From {userName}", Contact.Id, CurrentUserId);
+                    messages.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = new ApplicationUser() { Id = CurrentUser.Id, Email = CurrentUser.Email }, FromUserId = CurrentUser.Id });
+                    await hubConnection.SendAsync("ChatNotificationAsync", $"New Message From {userName}", Contact.Id, CurrentUser.Id);
                 }
-                else if ((Contact.Id == message.FromUserId && CurrentUserId == message.ToUserId))
+                else if ((Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
                 {
                     messages.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = Contact, FromUserId = Contact.Id });
                 }
@@ -188,39 +206,41 @@
         await GetUsersAsync();
         var state = await AuthProvider.GetAuthenticationStateAsync();
         var user = state.User;
-        CurrentUserId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        CurrentUserEmail = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-
-        if (!string.IsNullOrEmpty(ContactId))
+        CurrentId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        CurrentUser = await chatService.GetUserDetailsAsync(CurrentId!);
+        if (!string.IsNullOrEmpty(ContactId) && Contact!= null)
         {
-            await LoadUserChatAsync(ContactId);
+            await LoadUserChatAsync(Contact);
         }
         else
         {
             if (ChatUsers.Count > 0)
             {
-                await LoadUserChatAsync(ChatUsers.First().Id);
+                await LoadUserChatAsync(ChatUsers.First());
             }
         }
     }
 
-    private async Task LoadUserChatAsync(string userId)
+    private async Task LoadUserChatAsync(ApplicationUser user)
     {
-        Contact = await chatService.GetUserDetailsAsync(userId);
+        Contact = user;
         NavigationManager.NavigateTo($"chat/{Contact.Id}");
         messages = new List<ChatMessage>();
         messages = await chatService.GetConversationAsync(Contact.Id);
-        CurrentProfileImageUrl = await chatService.GetProfile(CurrentUserId!);
+
     }
     private async Task GetUsersAsync()
     {
         ChatUsers = await chatService.GetUsersAsync();
 
+
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+
         await JS.InvokeAsync<string>("ScrollToBottom", "chatContainer");
+
 
     }
     private async Task HandleKeyDown(KeyboardEventArgs args)
@@ -246,9 +266,22 @@
         {
             var search = SearchTerm;
             SearchTerm = string.Empty;
-            messages = await chatService.SearchAsync(search, Contact.Id);
+            SearchResults = await chatService.SearchAsync(search, Contact!.Id);
             StateHasChanged();
         }
 
+    }
+    private async Task HandleSearch(KeyboardEventArgs args)
+    {
+        if(args.Key == "Enter")
+        {
+
+            await Search();
+        }
+    }
+    private void HandleSearchInput(ChangeEventArgs args)
+    {
+        Searching = true;
+        SearchTerm = args.Value!.ToString();
     }
 }
