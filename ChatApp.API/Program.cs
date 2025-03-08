@@ -38,7 +38,7 @@ builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowBlazor",
-        policy => policy.WithOrigins("http://192.168.254.6:8080", "http://localhost:8080", "http://localhost:5228") // Add your Blazor WebAssembly origin
+        policy => policy.WithOrigins("http://192.168.254.6:8080") // Add your Blazor WebAssembly origin
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials());

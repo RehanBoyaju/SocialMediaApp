@@ -10,7 +10,7 @@
         You are not authorized
     </NotAuthorized>
 </AuthorizeView>
-@if(Contact== null || ChatUsers.Count == 0)
+@if (Contact == null || ChatUsers.Count == 0)
 {
     <em>Loading...</em>
 }
@@ -24,7 +24,7 @@ else
                 {
                     @foreach (var user in ChatUsers)
                     {
-                        @if (user.Id != Contact.Id)
+                        if (user.Id != Contact.Id)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user)">
                                 <div class="d-flex">
@@ -54,6 +54,7 @@ else
                                 </div>
                             </li>
                         }
+                         
                     }
                 }
                 else
@@ -82,7 +83,7 @@ else
                                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
                                 </svg>
                             </button>
-                            @if(Searching)
+                            @if (Searching)
                             {
                                 <button @onclick="() => {Searching = false; }" class="btn btn-outline-danger">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-lg" viewBox="0 0 16 16">
@@ -95,7 +96,7 @@ else
                 </div>
             </nav>
             <div style="max-height:69vh;min-height:69vh; overflow-y:scroll" id="chatContainer" class="body bg-body-tertiary">
-                @foreach (var msg in Searching?SearchResults:messages)
+                @foreach (var msg in Searching ? SearchResults : messages)
                 {
                     if (msg.FromUserId == CurrentUser.Id)
                     {
@@ -131,7 +132,7 @@ else
                     }
                 }
             </div>
-            <div class="d-flex flex-row px-2 p-3 bg-body-secondary" >
+            <div class="d-flex flex-row px-2 p-3 bg-body-secondary">
                 <InputText Placeholder="Enter Your Message..." class="mt-n2 mx-4 flex-grow-1" @bind-Value="CurrentMessage" @oninput="OnInputChanged" @onkeydown="HandleKeyDown" />
                 <button type="submit" class="btn btn-primary" @onclick="() => SubmitAsync(CurrentMessage!)">Send</button>
             </div>
@@ -208,7 +209,7 @@ else
         var user = state.User;
         CurrentId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
         CurrentUser = await chatService.GetUserDetailsAsync(CurrentId!);
-        if (!string.IsNullOrEmpty(ContactId) && Contact!= null)
+        if (!string.IsNullOrEmpty(ContactId) && Contact != null)
         {
             await LoadUserChatAsync(Contact);
         }
@@ -273,7 +274,7 @@ else
     }
     private async Task HandleSearch(KeyboardEventArgs args)
     {
-        if(args.Key == "Enter")
+        if (args.Key == "Enter")
         {
 
             await Search();

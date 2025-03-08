@@ -312,6 +312,7 @@ else
     {
         if (AuthProvider is CustomAuthenticationStateProvider provider)
         {
+            Logout();
             await provider.DeleteAsync(user!.Email!);
             NavigationManager.NavigateTo("/");
         }

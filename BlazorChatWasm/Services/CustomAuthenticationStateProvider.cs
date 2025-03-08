@@ -184,7 +184,7 @@ namespace BlazorChatWasm.Services
 
         public async Task<FormResult> DeleteAsync(string email)
         {
-            var response = await httpClient.DeleteAsync(email);
+            var response = await httpClient.DeleteAsync($"delete/{email}");
             if (response.IsSuccessStatusCode)
             {
                 Logout();
