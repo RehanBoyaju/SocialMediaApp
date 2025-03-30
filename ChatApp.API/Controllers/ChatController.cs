@@ -71,13 +71,29 @@ namespace ChatApp.API.Controllers
         {
             var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
             var chats = await _context.ChatMessages
-                .Where(h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) )&& h.Message.Contains(searchTerm))
+                .Where(h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) )&& h.Message.Contains(searchTerm) )
                 .OrderBy(a => a.CreatedDate)
                 .Include(a => a.FromUser)
                 .Include(a => a.ToUser)
                 .ToListAsync();
 
-            return Ok(chats);
+
+            Dictionary<ChatMessage,List<ChatMessage>> nearbyChats = new();
+
+            foreach (var chatMessage in chats)
+            {
+                var baseCreatedDate = chatMessage.CreatedDate;
+                var low = baseCreatedDate.AddMinutes (-5);
+                var high = baseCreatedDate.AddMinutes (5);
+                nearbyChats[chatMessage] = await _context.ChatMessages
+                    .Where( h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) && ((h.CreatedDate >= low && h.CreatedDate <= high) || h.Message.Contains(searchTerm))))
+                    .OrderBy( a=> a.CreatedDate)
+                    .Include(h=>h.FromUser)
+                    .Include(h=> h.ToUser)
+                    .ToListAsync();
+            }
+            
+            return Ok(nearbyChats);
         }
     }
 }
