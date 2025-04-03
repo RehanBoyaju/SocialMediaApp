@@ -17,7 +17,8 @@ namespace BlazorChatWasm.Services
         private readonly HttpClient httpClient;
         private readonly ISyncLocalStorageService localStorage;
 
-        public CustomAuthenticationStateProvider(HttpClient httpClient, ISyncLocalStorageService localStorage) {
+        public CustomAuthenticationStateProvider(HttpClient httpClient, ISyncLocalStorageService localStorage)
+        {
             this.httpClient = httpClient;
             this.localStorage = localStorage;
 
@@ -26,11 +27,11 @@ namespace BlazorChatWasm.Services
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
             }
-            
+
         }
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-           // var user = new ClaimsPrincipal(new ClaimsIdentity()); // not authenticated user
+            // var user = new ClaimsPrincipal(new ClaimsIdentity()); // not authenticated user
             //var claims = new List<Claim> { new Claim(ClaimTypes.Name, "John Doe") };
             //var identity = new ClaimsIdentity(claims, "Any");
             //var user = new ClaimsPrincipal(identity); //authenticated user
@@ -38,7 +39,7 @@ namespace BlazorChatWasm.Services
             var user = new ClaimsPrincipal(new ClaimsIdentity()); // not authenticated user
             try
             {
-                var response = await httpClient.GetAsync("api/account/profile");
+                var response = await httpClient.GetAsync("Account");
                 if (response.IsSuccessStatusCode)
                 {
                     var strResponse = await response.Content.ReadAsStringAsync();
@@ -47,13 +48,13 @@ namespace BlazorChatWasm.Services
                     var userName = jsonResponse?["userName"]?.ToString();
                     var email = jsonResponse?["email"]?.ToString();
                     var claims = new List<Claim> {
-                        new Claim(ClaimTypes.NameIdentifier,id),
-                        new Claim(ClaimTypes.Name, userName),
-                        new Claim(ClaimTypes.Email, email)
+                        new Claim(ClaimTypes.NameIdentifier,id!),
+                        new Claim(ClaimTypes.Name, userName!),
+                        new Claim(ClaimTypes.Email, email!)
                     };
                     var identity = new ClaimsIdentity(claims, "Token");
                     user = new ClaimsPrincipal(identity);
-                    return new AuthenticationState(user);   
+                    return new AuthenticationState(user);
                 }
             }
             catch { }
@@ -66,32 +67,114 @@ namespace BlazorChatWasm.Services
             try
             {
                 var response = await httpClient.PostAsJsonAsync("login", loginModel);
-                if (response.IsSuccessStatusCode)
+                var strResponse = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JsonNode.Parse(strResponse);
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    var strResponse = await response.Content.ReadAsStringAsync();
-                    var jsonResponse = JsonNode.Parse(strResponse);
+                    try
+                    {
+                        if (jsonResponse?["errors"] is JsonObject errorsObject)
+                        {
+                            var errors = errorsObject
+                                .SelectMany(e => e.Value?.AsArray()?.Select(v => v?.ToString())
+                                .Where(e => e != null)
+                                .ToArray()!);
+
+                            return new FormResult
+                            {
+                                Succeeded = false,
+                                Errors = (errors.Any() ? errors! : new[] { "Login failed" }).ToArray()!
+                            };
+                        }
+                        // Handle other error formats
+                        var errorMessage = jsonResponse?["title"]?.ToString()
+                            ?? jsonResponse?["detail"]?.ToString()
+                            ?? "Login failed";
+
+                        return new FormResult
+                        {
+                            Succeeded = false,
+                            Errors = new[] { errorMessage }
+                        };
+                    }
+                    catch
+                    {
+                        return new FormResult() { Succeeded = false, Errors = new string[] { $"Login failed {response.StatusCode}" } };
+                    }
+                }
+                try
+                {
                     var accessToken = jsonResponse?["accessToken"]?.ToString();
                     var refreshToken = jsonResponse?["refreshToken"]?.ToString();
-                    
+                    if (string.IsNullOrEmpty(accessToken))
+                    {
+                        return new FormResult
+                        {
+                            Succeeded = false,
+                            Errors = new[] { "Invalid token received" }
+                        };
+                    }
+
+                    // Store tokens securely
                     localStorage.SetItem("accessToken", accessToken);
-                    localStorage.SetItem("refreshToken", refreshToken);
-                    httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
+                    if (!string.IsNullOrEmpty(refreshToken))
+                    {
+                        localStorage.SetItem("refreshToken", refreshToken);
+                    }
+
+                    // Set default authorization header
+                    httpClient.DefaultRequestHeaders.Authorization =
+                        new AuthenticationHeaderValue("Bearer", accessToken);
+
+                    // Notify authentication state change
                     NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
-                    return new FormResult { Succeeded = true };
-                }
-                else
-                {
-                    var strResponse = await response.Content.ReadAsStringAsync();
-                    var jsonResponse = JsonNode.Parse(strResponse);
-                    var errorsObject = jsonResponse!["errors"]!.AsObject();
-                    var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
-                    return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
-                }
-            }
-            catch { }
 
-            return new FormResult { Succeeded = false, Errors = new string[] { "Invalid Login Attempt" } };
+                    return new FormResult { Succeeded = true };
+
+                }
+                catch (Exception ex)
+                {
+                    // Clean up if token processing fails
+                    localStorage.RemoveItem("accessToken");
+                    localStorage.RemoveItem("refreshToken");
+                    httpClient.DefaultRequestHeaders.Authorization = null;
+
+                    return new FormResult
+                    {
+                        Succeeded = false,
+                        Errors = new[] { $"Error processing login: {ex.Message}" }
+                    };
+                }
+
+            }
+            catch (HttpRequestException httpEx)
+            {
+                return new FormResult
+                {
+                    Succeeded = false,
+                    Errors = new[] { $"Network error: {httpEx.Message}" }
+                };
+            }
+            catch (TaskCanceledException)
+            {
+                return new FormResult
+                {
+                    Succeeded = false,
+                    Errors = new[] { "Request timed out" }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new FormResult
+                {
+                    Succeeded = false,
+                    Errors = new[] { $"Unexpected error: {ex.Message}" }
+                };
+            }
+
+
         }
         public async Task<FormResult> RegisterAsync(RegisterModel registerModel)
         {
@@ -116,29 +199,8 @@ namespace BlazorChatWasm.Services
 
             return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
         }
-        //public async Task<FormResult> DeleteAsync(string email)
-        //{
-        //    try
-        //    {
-        //        var response = await httpClient.DeleteAsync($"delete/{email}");
-        //        if (response.IsSuccessStatusCode)
-        //        {
-        //            Logout();
-        //            return new FormResult { Succeeded = true };
-        //        }
-        //        else
-        //        {
-        //            var strResponse = await response.Content.ReadAsStringAsync();
-        //            var jsonResponse = JsonNode.Parse(strResponse);
-        //            var errorsObject = jsonResponse!["errors"]!.AsObject();
-        //            var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
-        //            return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
-        //        }
-        //    }
-        //    catch { }
-        //    return new FormResult { Succeeded = false, Errors = new string[] { "Connection Error" } };
-        //}
-        public async Task<FormResult> UpdateAsync(string email,UpdateModel updateUser)
+    
+        public async Task<FormResult> UpdateAsync(string email, UpdateModel updateUser)
         {
             var response = await httpClient.PutAsJsonAsync($"update/{email}", updateUser);
             if (response.IsSuccessStatusCode)
@@ -200,18 +262,7 @@ namespace BlazorChatWasm.Services
                 return new FormResult { Succeeded = false, Errors = errorsList.ToArray() };
             }
         }
-        //public async Task<byte[]> GetProfileImage(string userId)
-        //{
-        //    var response = await httpClient.GetAsync($"api/account/{userId}/profileimage");
-        //    if (response.IsSuccessStatusCode)
-        //    {
-        //        return await response.Content.ReadAsByteArrayAsync();
-        //    }
-
-        //    return null;
-
-
-        //}
+       
 
         public void Logout()
         {
@@ -221,6 +272,6 @@ namespace BlazorChatWasm.Services
             NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         }
     }
-    
-    
+
+
 }

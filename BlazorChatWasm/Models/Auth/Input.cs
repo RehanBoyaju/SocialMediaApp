@@ -27,7 +27,7 @@ namespace BlazorChatWasm.Models.Auth
 
         public string? ProfileImageUrl { get; set; }
 
-        public string[] Errors { get; set; } = new string[0];
+        public string[] Errors { get; set; } = [];
     }
 
 }

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ChatApp.API.Migrations
 {
     /// <inheritdoc />
-    public partial class AddGroup : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -31,6 +31,7 @@ namespace ChatApp.API.Migrations
                 {
                     Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     ProfileImage = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    FriendIds = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -55,9 +56,11 @@ namespace ChatApp.API.Migrations
                 name: "Groups",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MemberIds = table.Column<string>(type: "nvarchar(max)", nullable: false)
                 },
                 constraints: table =>
@@ -172,30 +175,6 @@ namespace ChatApp.API.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "ApplicationUserGroup",
-                columns: table => new
-                {
-                    GroupsId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    MembersId = table.Column<string>(type: "nvarchar(450)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ApplicationUserGroup", x => new { x.GroupsId, x.MembersId });
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserGroup_AspNetUsers_MembersId",
-                        column: x => x.MembersId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ApplicationUserGroup_Groups_GroupsId",
-                        column: x => x.GroupsId,
-                        principalTable: "Groups",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "ChatMessages",
                 columns: table => new
                 {
@@ -203,9 +182,9 @@ namespace ChatApp.API.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     FromUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     ToUserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ToGroupId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    ToGroupId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -214,7 +193,8 @@ namespace ChatApp.API.Migrations
                         name: "FK_ChatMessages_AspNetUsers_FromUserId",
                         column: x => x.FromUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_ChatMessages_AspNetUsers_ToUserId",
                         column: x => x.ToUserId,
@@ -227,10 +207,29 @@ namespace ChatApp.API.Migrations
                         principalColumn: "Id");
                 });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_ApplicationUserGroup_MembersId",
-                table: "ApplicationUserGroup",
-                column: "MembersId");
+            migrationBuilder.CreateTable(
+                name: "GroupMembers",
+                columns: table => new
+                {
+                    GroupId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupMembers", x => new { x.GroupId, x.UserId });
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupMembers_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -285,14 +284,16 @@ namespace ChatApp.API.Migrations
                 name: "IX_ChatMessages_ToUserId",
                 table: "ChatMessages",
                 column: "ToUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupMembers_UserId",
+                table: "GroupMembers",
+                column: "UserId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ApplicationUserGroup");
-
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -310,6 +311,9 @@ namespace ChatApp.API.Migrations
 
             migrationBuilder.DropTable(
                 name: "ChatMessages");
+
+            migrationBuilder.DropTable(
+                name: "GroupMembers");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

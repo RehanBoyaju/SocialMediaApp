@@ -61,7 +61,7 @@
         var state = await AuthProvider.GetAuthenticationStateAsync();
         var user = state.User;
 
-        if (user.Identity.IsAuthenticated)
+        if (user.Identity!.IsAuthenticated)
         {
             CurrentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value!;
         }
@@ -84,7 +84,7 @@
             if (CurrentUserId == receiverUserId)
             {
                 await JS.InvokeVoidAsync("PlayAudio", "notification");
-                var sender = await chatService.GetUserDetailsAsync(senderUserId);
+                var sender = await userService.GetUserDetailsAsync(senderUserId);
                 var permission = await JS.InvokeAsync<string>("Notification.requestPermission");
                 if (permission == "granted")
                 {

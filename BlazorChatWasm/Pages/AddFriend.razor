@@ -1,0 +1,75 @@
+﻿@page "/friends/add"
+@attribute [Authorize]
+<div class="row">
+    <div class="col-lg-6">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>@ErrorMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <div>
+            @foreach (var user in NonFriends)
+            {
+                <div class="card m-4">
+                    <h5 class="card-header">@user.UserName</h5>
+                    <div class="card-body">
+                        <h5 class="card-title">@user.Email</h5>
+                        @* <p class="card-text">@user.Bio</p> *@
+
+                        <button class="btn btn-primary w-20" @onclick="()=> AddFriendAsync(user.Id)">Add Friend</button>
+
+
+                    </div>
+                </div>
+            }
+        </div>
+
+
+        <a href="chat" class="btn btn-secondary" role="button">Return</a>
+
+    </div>
+</div>
+@code {
+    public bool IsLoading;
+
+    List<ApplicationUser> NonFriends = new List<ApplicationUser>();
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = false;
+
+        NonFriends = await friendService.GetNonFriendsAsync();
+    }
+    private async Task AddFriendAsync(string userId)
+    {
+        IsLoading = true;
+        if (ErrorMessage != null)
+        {
+            IsLoading = false;
+            return;
+        }
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await friendService.AddFriendsAsync(userId);
+
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Friend Added Successfully");
+                NonFriends.RemoveAll(u => u.Id == userId);
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+
+
+}

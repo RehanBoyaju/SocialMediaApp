@@ -20,23 +20,32 @@ using System.Text;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.V4.Pages.Account.Internal;
+using Microsoft.AspNetCore.Components.Authorization;
+using ChatApp.API.Services;
+using Microsoft.AspNetCore.Authorization;
 namespace ChatApp.API.Controllers
 {
     [Route("")]
     [ApiController]
 
-    public class AuthenticationController : ControllerBase
+    public class AuthenticationController(IConfiguration configuration, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManger, RoleManager<IdentityRole> roleManager, ApplicationDbContext context) : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        public AuthenticationController(IConfiguration configuration, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManger)
-        {
-            _configuration = configuration;
-            _userManager = userManager;
-            _signInManager = signInManger;
-        }
+        private readonly IConfiguration _configuration = configuration;
+        private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager = signInManger;
+        private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+        private readonly ApplicationDbContext _context = context;
 
+        [HttpGet("Account")]
+        public async Task<IActionResult> GetAuthenticationStateAsync()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                return NotFound("User not found.");
+            }
+            return Ok(user);
+        }
         [HttpPost("register")]
         public async Task<Results<Ok, ValidationProblem>> Register([FromBody] RegisterModel model)
         {
@@ -44,7 +53,7 @@ namespace ChatApp.API.Controllers
             {
                 UserName = model.Username,
                 Email = model.Email,
-                ProfileImage = ConvertToByteArray(model.ProfileImageUrl)
+                ProfileImageUrl = model.ProfileImageUrl ?? GetDefaultProfileService.DefaultProfile()
             };
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -52,26 +61,31 @@ namespace ChatApp.API.Controllers
             {
                 return CreateValidationProblem(result);
             }
-
+            if (string.IsNullOrEmpty(model.Role))
+            {
+                IdentityResult addUserRole = await _userManager.AddToRoleAsync(user, "User");
+                if (!addUserRole.Succeeded)
+                {
+                    return CreateValidationProblem(addUserRole);
+                }
+                //await SendConfirmationEmailAsync(user, userManager, context, email);
+                return TypedResults.Ok();
+            }
+            var roleExists = await _roleManager.RoleExistsAsync(model.Role);
+            if (!roleExists)
+            {
+                return CreateValidationProblem("Role", "Role does not exist.");
+            }
+            IdentityResult addRole = await _userManager.AddToRoleAsync(user, model.Role);
+            if (!addRole.Succeeded)
+            {
+                return CreateValidationProblem(addRole);
+            }
             //await SendConfirmationEmailAsync(user, userManager, context, email);
             return TypedResults.Ok();
         }
-        private byte[] ConvertToByteArray(string? base64String)
-        {
-            string DefaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default.jpg");
 
-            if (string.IsNullOrEmpty(base64String))
-            {
-                return System.IO.File.Exists(DefaultImagePath) ? System.IO.File.ReadAllBytes(DefaultImagePath) : Array.Empty<byte>();
-            }
-            // Remove the data prefix
-            if (base64String.Contains(","))
-            {
-                base64String = base64String.Split(',')[1];
-            }
 
-            return Convert.FromBase64String(base64String);
-        }
         [HttpPost("login")]
         public async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>> Login([FromBody] LoginModel login, [FromQuery] bool? useCookies, [FromQuery] bool? useSessionCookies)
         {
@@ -84,7 +98,7 @@ namespace ChatApp.API.Controllers
             var isPersistent = (useCookies == true) && (useSessionCookies != true);
             _signInManager.AuthenticationScheme = useCookieScheme ? IdentityConstants.ApplicationScheme : IdentityConstants.BearerScheme;
 
-            var result = await _signInManager.PasswordSignInAsync(user.UserName, login.Password, isPersistent, lockoutOnFailure: true);
+            var result = await _signInManager.PasswordSignInAsync(user.UserName!, login.Password, isPersistent, lockoutOnFailure: true);
 
             if (result.RequiresTwoFactor)
             {
@@ -106,6 +120,7 @@ namespace ChatApp.API.Controllers
             return TypedResults.Empty;
         }
 
+        [Authorize]
         [HttpDelete("delete/{email}")]
         public async Task<Results<Ok, ValidationProblem>> DeleteUser(string email)
         {
@@ -114,85 +129,130 @@ namespace ChatApp.API.Controllers
             {
                 return TypedResults.Ok();
             }
-            var result = await _userManager.DeleteAsync(user);
-            if (!result.Succeeded)
+            var userRoles = await _userManager.GetRolesAsync(user);
+            _ = await _userManager.RemoveFromRolesAsync(user, userRoles);
+
+            var userId = user.Id;
+
+            // Remove related chat messages
+            var chatMessages = _context.ChatMessages.Where(m => m.ToUserId == userId);
+            _context.ChatMessages.RemoveRange(chatMessages);
+
+            // Remove group memberships
+            var groupMembers = _context.GroupMembers.Where(gm => gm.UserId == userId);
+            _context.GroupMembers.RemoveRange(groupMembers);
+
+            // Finally, delete the user
+
+            if (user != null)
             {
-                return CreateValidationProblem(result);
+                _context.Users.Remove(user);
             }
+
+            // Save changes
+            await _context.SaveChangesAsync();
+
             return TypedResults.Ok();
         }
-        [HttpPut("update/{email}")]
 
+        [Authorize]
+        [HttpPut("update/{email}")]
         public async Task<IActionResult> UpdateUser(string email, [FromBody] UpdateModel updateModel)
         {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return NotFound("User not found.");
-            }
 
-            // Check if the new username or email already exists (optional validation)
-            if ((await _userManager.FindByNameAsync(updateModel.Username)) != null && updateModel.Username != user.UserName)
-            {
-                return BadRequest("Username is already taken.");
-            }
-
-            if ((await _userManager.FindByEmailAsync(updateModel.Email)) != null && updateModel.Email != user.Email)
-            {
-                return BadRequest("Email is already taken.");
-            }
-
-            //// Change password properly
-            //if (!string.IsNullOrEmpty(updateModel.Password))
-            //{
-            //    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            //    var passwordResult = await _userManager.ResetPasswordAsync(user, resetToken, updateModel.Password);
-
-            //    if (!passwordResult.Succeeded)
-            //    {
-            //        return BadRequest(passwordResult.Errors);
-            //    }
-            //}
-
-            // Update other fields
-            user.UserName = updateModel.Username;
-            user.Email = updateModel.Email;
-
-            // Update profile image only if provided
-            if (!string.IsNullOrEmpty(updateModel.ProfileImageUrl))
-            {
-                user.ProfileImage = ConvertToByteArray(updateModel.ProfileImageUrl);
-            }
-
+            using var transaction = _context.Database.BeginTransaction();
             try
             {
+                var user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
+                {
+                    return NotFound("User not found.");
+                }
+
+                // Check if the new username or email already exists (optional validation)
+                if ((await _userManager.FindByNameAsync(updateModel.Username)) != null && updateModel.Username != user.UserName)
+                {
+                    return BadRequest("Username is already taken.");
+                }
+
+                if ((await _userManager.FindByEmailAsync(updateModel.Email)) != null && updateModel.Email != user.Email)
+                {
+                    return BadRequest("Email is already taken.");
+                }
+                if (!string.IsNullOrEmpty(updateModel.Role))
+                {
+                    var roleExists = await _roleManager.RoleExistsAsync(updateModel.Role);
+                    if (!roleExists)
+                    {
+                        return BadRequest("Role does not exist.");
+                    }
+                }
+                else
+                {
+                    updateModel.Role = (await _userManager.GetRolesAsync(user)).First();
+                }
+
+
+                // Update other fields
+                user.UserName = updateModel.Username;
+                user.Email = updateModel.Email;
+
+                // Update profile image only if provided
+                if (!string.IsNullOrEmpty(updateModel.ProfileImageUrl))
+                {
+                    user.ProfileImageUrl = updateModel.ProfileImageUrl;
+                }
+
+
                 var result = await _userManager.UpdateAsync(user);
                 if (!result.Succeeded)
                 {
                     return BadRequest(result.Errors);
                 }
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                var removeRoles = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                if (!removeRoles.Succeeded)
+                {
+                    return BadRequest("Failed to remove roles");
+                }
+                var addRole = await _userManager.AddToRoleAsync(user, updateModel.Role);
+                if (!addRole.Succeeded)
+                {
+                    return BadRequest("Failed to add role");
+                }
+
+
+                await _signInManager.SignOutAsync();
+                await transaction.CommitAsync();
+                return Ok("User updated successfully.");
+
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                return Conflict("Another user has modified this record.");
+                await transaction.RollbackAsync();
+                return BadRequest(ex.Message);
             }
-            await _signInManager.SignOutAsync();
-            return Ok("User updated successfully.");
         }
 
-        [HttpPost("changepassword/{email}")]
+        [Authorize]
+        [HttpPost("changepassword")]
         public async Task<Results<Ok, ValidationProblem>> ChangePasswordAsync(ChangeModel changeModel)
         {
             var user = await _userManager.FindByIdAsync(changeModel.Id);
+            if (user == null)
+            {
+                return CreateValidationProblem("User", "User not found.");
+            }
             var result = await _userManager.ChangePasswordAsync(user, changeModel.OldPassword, changeModel.NewPassword);
-         
-            if(!result.Succeeded)
+
+            if (!result.Succeeded)
             {
                 return CreateValidationProblem(result);
             }
 
             return TypedResults.Ok();
         }
+
 
         private string GenerateToken(ApplicationUser user)
         {
@@ -212,10 +272,12 @@ namespace ChatApp.API.Controllers
                 );
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
         private static ValidationProblem CreateValidationProblem(string errorCode, string errorDescription) =>
             TypedResults.ValidationProblem(new Dictionary<string, string[]> {
             { errorCode, [errorDescription] }
             });
+
 
         private static ValidationProblem CreateValidationProblem(IdentityResult result)
         {
@@ -245,48 +307,54 @@ namespace ChatApp.API.Controllers
             return TypedResults.ValidationProblem(errorDictionary);
         }
     }
+
+
     public class LoginModel
     {
         [Required]
         [MinLength(3)]
-        public string Username { get; init; }
+        public required string Username { get; init; }
 
         [Required]
-        public string Password { get; init; }
+        public required string Password { get; init; }
 
         public string? TwoFactorCode { get; init; }
 
         public string? TwoFactorRecoveryCode { get; init; }
     }
 
-
     public class RegisterModel
     {
         [Required]
         [MinLength(3)]
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
-        public string Password { get; set; }
+        public required string Password { get; set; }
+
+
+        public string Role { get; set; } = string.Empty;
 
         public string? ProfileImageUrl { get; set; }
     }
+
     public class UpdateModel
     {
         [Required]
         [MinLength(3)]
-        public string Username { get; set; }
+        public required string Username { get; set; }
 
         [Required]
         [EmailAddress]
-        public string Email { get; set; }
-
+        public required string Email { get; set; }
+        public string Role { get; set; } = string.Empty;
         public string? ProfileImageUrl { get; set; }
     }
+
     public class ChangeModel
     {
         public string Id { get; set; } = "";
@@ -297,6 +365,6 @@ namespace ChatApp.API.Controllers
         [Required]
         [DataType(DataType.Password)]
         public string NewPassword { get; set; } = "";
-        
+
     }
 }

@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
 using System.Text.Json.Serialization;
 
@@ -6,22 +8,14 @@ namespace ChatApp.API.Data
 {
     public class ApplicationUser : IdentityUser
     {
-        // Default image path constructed from WebRootPath
-        //private static string DefaultImagePath => Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default.jpg");
-
-        // Property for ProfileImage, initialized in the constructor
-        public byte[]? ProfileImage { get; set; }
-
-        //public IEnumerable<int> ChatMessagesIdFromUsers { get; set; } = [];
-        //public IEnumerable<int> ChatMessagesIdToUsers { get; set; } = [];
-
-
+        public string ProfileImageUrl { get; set; } = string.Empty;
         [JsonIgnore]
-        public ICollection<ChatMessage> ChatMessagesFromUsers { get; set; } = new HashSet<ChatMessage>();
+        public virtual ICollection<Relationship> Friends { get; set; } = new HashSet<Relationship>();
         [JsonIgnore]
-        public  ICollection<ChatMessage> ChatMessagesToUsers { get; set; } = new HashSet<ChatMessage>();
-        
+        public virtual ICollection<ChatMessage>? ChatMessagesFromUsers { get; set; } = new HashSet<ChatMessage>();
         [JsonIgnore]
-        public virtual ICollection<Group> Groups { get; set; } = new HashSet<Group>();
+        public  virtual ICollection<ChatMessage>? ChatMessagesToUsers { get; set; } = new HashSet<ChatMessage>();
+        [JsonIgnore]
+        public virtual ICollection<GroupMember>? Groups { get; set; } = new HashSet<GroupMember>();
     }
 }

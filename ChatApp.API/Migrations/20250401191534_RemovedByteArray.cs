@@ -5,32 +5,25 @@
 namespace ChatApp.API.Migrations
 {
     /// <inheritdoc />
-    public partial class final : Migration
+    public partial class RemovedByteArray : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<byte[]>(
+            migrationBuilder.DropColumn(
                 name: "ProfileImage",
-                table: "AspNetUsers",
-                type: "varbinary(max)",
-                nullable: true,
-                oldClrType: typeof(byte[]),
-                oldType: "varbinary(max)");
+                table: "AspNetUsers");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AlterColumn<byte[]>(
+            migrationBuilder.AddColumn<byte[]>(
                 name: "ProfileImage",
                 table: "AspNetUsers",
                 type: "varbinary(max)",
                 nullable: false,
-                defaultValue: new byte[0],
-                oldClrType: typeof(byte[]),
-                oldType: "varbinary(max)",
-                oldNullable: true);
+                defaultValue: new byte[0]);
         }
     }
 }

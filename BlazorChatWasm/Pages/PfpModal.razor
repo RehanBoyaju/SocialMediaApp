@@ -34,7 +34,7 @@
     private string? ErrorMessage;
     private InputModel Input { get; set; } = new InputModel();
 
-    [CascadingParameter] public BlazoredModalInstance ModalInstance { get; set; } // Inject ModalInstance to control the modal
+    [CascadingParameter] public BlazoredModalInstance? ModalInstance { get; set; } // Inject ModalInstance to control the modal
     [Parameter] public EventCallback<string?> OnImageSaved { get; set; }  // This is the callback parameter
 
     private async Task HandleFileChange(InputFileChangeEventArgs e)

@@ -18,5 +18,8 @@ builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStat
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazoredModal();
 builder.Services.AddTransient<ChatService>();
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<FriendsService>();
+builder.Services.AddScoped<GroupService>();
 
 await builder.Build().RunAsync();

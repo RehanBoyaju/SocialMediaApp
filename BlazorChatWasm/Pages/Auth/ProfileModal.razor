@@ -19,7 +19,7 @@ else
             <div class="col text-center">
                 <div class="position-relative d-inline-block">
                     <!-- Wrap img + icon in a container -->
-                    <img src="@user.profileImageUrl" alt="pfp" height="100" width="100" class="rounded-circle" />
+                    <img src="@user.ProfileImageUrl" alt="pfp" height="100" width="100" class="rounded-circle" />
                     <!-- Hidden File Input (Label Triggers It) -->
                     <InputFile  id="fileInput" style="display: none;" onchange="OnFileSelected" />
 
@@ -223,7 +223,7 @@ else
         UpdateModel updateModel = new UpdateModel
             {
                 Username = updatedUsername,
-                Email = user!.Email!,
+                Email = user!.Email!
             };
         if (AuthProvider is CustomAuthenticationStateProvider customProvider)
         {
@@ -245,35 +245,17 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        user = await HttpClient.GetFromJsonAsync<ApplicationUser>("api/account/profile");
+        user = await HttpClient.GetFromJsonAsync<ApplicationUser>("Account");
 
         if (user == null)
         {
             message = "You must be logged in to access this page.";
             NavigationManager.NavigateTo("login");
         }
-        else
-        {
-
-            user.profileImageUrl = await GetProfile(user.Id);
-
-        }
+        
 
     }
-    private async Task<string> GetProfile(string userId)
-    {
-        // var image = await HttpClient.GetByteArrayAsync($"api/account/{userId}/profileimage");
-        // return $"data:image/jpeg;base64,{Convert.ToBase64String(image)}";
-        var response = await HttpClient.GetAsync($"api/account/{userId}/profileimage");
-        if (response.IsSuccessStatusCode)
-        {
-            var image = await response.Content.ReadAsByteArrayAsync();
-            var mimeType = response.Content.Headers.ContentType?.MediaType ?? "application/octet-stream";
-
-            return $"data:{mimeType};base64,{Convert.ToBase64String(image)}";
-        }
-        throw new Exception("Failed to load image");
-    }
+   
     private async Task EditEmail()
     {
         UpdateModel updateModel = new UpdateModel
@@ -323,7 +305,7 @@ else
             var buffer = new byte[file.Size];
             await file.OpenReadStream().ReadAsync(buffer);
             if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg" && file.ContentType != "image/png")
-            {
+               {
                 ErrorMessage.Add("Only jpg, jpegs and pngs are allowed");
                 ImagePreviewUrl = null;
                 return;
@@ -358,7 +340,7 @@ else
             if (response.Succeeded)
             {
                 editPfp = false;
-                user.profileImageUrl = ImagePreviewUrl!;
+                user.ProfileImageUrl = ImagePreviewUrl!;
                 await JS.InvokeVoidAsync("alert", "Updated Pfp successfully");
                 ErrorMessage = new List<string>();
             }

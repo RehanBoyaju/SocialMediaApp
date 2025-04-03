@@ -4,6 +4,7 @@
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthProvider 
 @using Microsoft.AspNetCore.Components.Forms
+
 <h3>Login</h3>
 <PageTitle>Login</PageTitle>
 
@@ -67,10 +68,12 @@
     private string? ReturnUrl { get; set; }
 
     private string Error = "";
+
     public async Task HandleLogin()
     {
         if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
         {
+            Error = "";
             var result = await customAuthProvider.LoginAsync(loginModel);
             if (result.Succeeded)
             {
@@ -78,8 +81,10 @@
             }
             else
             {
-                Error = result.Errors![0];
+                if(result.Errors!=null)
+                    Error = string.Join(",",result.Errors);
             }
+            StateHasChanged();
         }
     }
 }

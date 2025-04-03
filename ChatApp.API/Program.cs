@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -20,7 +21,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //builder.Services.AddIdentity<IdentityUser, IdentityRole>()
 //    .AddEntityFrameworkStores<ApplicationDbContext>()
 //    .AddDefaultTokenProviders();
-builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkStores<ApplicationDbContext>();
+//builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+//    .AddEntityFrameworkStores<ApplicationDbContext>()
+//    .AddDefaultTokenProviders();
+
+//builder.Services.AddAuthentication()
+//    .AddIdentityBearerToken<ApplicationUser>();
 //builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 //    .AddJwtBearer(options =>
 //    {
@@ -34,6 +40,8 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddEntityFrameworkSt
 //            IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
 //        };
 //    });
+builder.Services.AddIdentityApiEndpoints<ApplicationUser>().AddRoles<IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>();
 builder.Services.AddSignalR();
 builder.Services.AddCors(options =>
 {
@@ -43,7 +51,10 @@ builder.Services.AddCors(options =>
                         .AllowAnyHeader()
                         .AllowCredentials());   
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy("Administrator", policy => policy.RequireRole("Administrator"))
+    .AddPolicy("User", policy => policy.RequireRole("User"));
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddEndpointsApiExplorer();
@@ -104,4 +115,21 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<SignalRHub>("/signalRHub");
 app.MapFallbackToFile("index.html");
+
+//Add Roles to Database
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var roles = new[] { "Administrator", "User" };
+
+    foreach (var role in roles)
+    {
+        var roleExists = await roleManager.RoleExistsAsync(role);
+        if (!roleExists)
+        {
+            await roleManager.CreateAsync(new IdentityRole(role));
+        }
+    }
+}
+
 app.Run();

@@ -3,34 +3,66 @@
 @using System.Security.Claims
 @page "/chat"
 @page "/chat/{ContactId}"
+@page "/chat/group/{GroupId:int?}"
 @attribute [Authorize]
 <PageTitle>Chat</PageTitle>
 <AuthorizeView>
     <NotAuthorized>
-        You are not authorized
+        <h3>You are not authorized!<a href="Account/Login">Redirect To Login</a></h3>
     </NotAuthorized>
 </AuthorizeView>
-@if (Contact == null || ChatUsers.Count == 0)
+@if ((string.IsNullOrEmpty(ContactId) ) && (GroupId == null || GroupId == 0))
 {
-    <em>Loading...</em>
+    if ( ChatUsers.Count == 0 )
+    {
+        <div class="d-flex align-items-center">
+            <em>No friends found</em>
+
+            <a href="friends/add" class="btn btn-se">
+                <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                        <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                    </svg>
+                </div>
+                Add Friends?
+                
+            </a>
+        </div>
+    }   
+    else if(Contact==null)
+    {
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+
+    }
 }
 else
 {
     <div class="d-flex flex-grow-1 flex-row">
         <div class="d-flex flex-column px-4" style="max-height:90vh;min-height:90vh; overflow:auto;">
+            <br /><br />
+            Online Friends: 
+            <a href="friends/add" class="btn btn-primary" role="button">
+                Add Friends
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                    <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                </svg>
+            </a>
             <ul class="list-group">
-                Online Users:
                 @if (ChatUsers != null)
                 {
                     @foreach (var user in ChatUsers)
                     {
-                        if (user.Id != Contact.Id)
+                        if (Contact != null && user.Id == Contact.Id)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user)">
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user.Id)">
                                 <div class="d-flex">
                                     <div class="mr-4 ">
                                         <div class="avatar">
-                                            <img src="@user.profileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            <img src="@user.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                         </div>
                                     </div>
                                     <div>
@@ -41,15 +73,56 @@ else
                         }
                         else
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user)">
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user.Id)">
                                 <div class="d-flex">
                                     <div class="mr-4 ">
                                         <div class="avatar">
-                                            <img src="@user.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            <img src="@user.ProfileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                         </div>
                                     </div>
                                     <div>
                                         <p class="mb-0">@user.UserName</p>
+                                    </div>
+                                </div>
+                            </li>
+
+                        }
+
+                    }
+                }
+                else 
+                {
+                    <li><a href="#">Add New User</a> </li>
+                }
+
+            </ul>
+            <hr class="dropdown-divider" />
+            <br /><br />
+            Groups: <a href="group/create">Create New Group</a>
+            <ul class="list-group">
+                @if (Groups != null)
+                {
+                    @foreach (var group in Groups)
+                    {
+
+                        if (group.Id != GroupId)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadGroupChatAsync(group.Id)">
+                                <div class="d-flex">
+
+                                    <div>
+                                        <p class="mb-0">@group.Name</p>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadGroupChatAsync(group.Id)">
+                                <div class="d-flex">
+
+                                    <div>
+                                        <p class="mb-0">@group.Name</p>
                                     </div>
                                 </div>
                             </li>
@@ -59,7 +132,7 @@ else
                 }
                 else
                 {
-                    <li><i>Loading Users....</i></li>
+                    <li><i>Loading Group....</i></li>
                 }
             </ul>
         </div>
@@ -67,10 +140,32 @@ else
             <nav class="navbar navbar-expand-lg bg-body-secondary">
                 <div class="container-fluid">
                     <div class="d-inline-flex align-items-center gap-3 ms-3">
-                        <div class="avatar">
-                            <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                        </div>
-                        <span>@Contact.Email</span>
+                        @if (ToggleGroupChat)
+                        {
+                            if (CurrentGroup != null)
+                            {
+                                <span>@CurrentGroup.Name</span>
+                            }
+                            else
+                            {
+                                <p>Loading..</p>
+                            }
+                        }
+                        else if (!ToggleGroupChat)
+                        {
+                            if (Contact != null)
+                            {
+                                <div class="avatar">
+                                    <img src="@Contact.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                </div>
+                                <span>@Contact.UserName</span>
+
+                            }
+                            else
+                            {
+                                <p>Loading..</p>
+                            }
+                        }
                     </div>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
@@ -96,41 +191,97 @@ else
                 </div>
             </nav>
             <div style="max-height:69vh;min-height:69vh; overflow-y:scroll" id="chatContainer" class="body bg-body-tertiary">
-                @foreach (var msg in Searching ? SearchResults : messages)
+                @if (messages is null)
                 {
-                    if (msg.FromUserId == CurrentUser.Id)
-                    {
-                        <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
-                            <div class="mr-4">
-                                <div class="avatar">
-                                    <img src="@CurrentUser.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                                </div>
-                            </div>
-                            <div>
-                                <p class="mb-0">You</p>
-                                <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
-
-                                <p class="mt-2" style="padding: 15px; background-color: #1976d2 ; border-radius: 5px;">@msg.Message</p>
-
-                            </div>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="d-flex flex-row my-4" style="padding-left:2vw">
-                            <div class="mr-4">
-                                <div class="avatar">
-                                    <img src="@Contact.profileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                                </div>
-                            </div>
-                            <div>
-                                <p class="mb-0">@msg.FromUser.UserName</p>
-                                <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
-                                <p class="mt-2" style="padding: 15px; background-color: #f4f4f4; border-radius: 5px;">@msg.Message</p>
-                            </div>
-                        </div>
-                    }
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
                 }
+                else
+                {
+                    @foreach (var msg in Searching ? SearchResults : messages)
+                    {
+                        if (CurrentUser != null)
+                        {
+                            if (ToggleGroupChat)
+                            {
+                                if (CurrentUser != null && msg.FromUserId == CurrentUser.Id)
+                                {
+                                    <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
+                                        <div class="mr-4">
+                                            <div class="avatar">
+                                                <img src="@CurrentUser.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0">You</p>
+                                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+
+                                            <p class="mt-2" style="padding: 15px; background-color: #1976d2 ; border-radius: 5px;">@msg.Message</p>
+
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+
+                                    <div class="d-flex flex-row my-4" style="padding-left:2vw">
+                                        <div class="mr-4">
+                                            <div class="avatar">
+
+                                                <img src="@GetProfileOfGroupMember(msg.FromUserId!)" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            @* <p class="mb-0">@msg.FromUser.UserName</p> *@
+                                            <p class="mb-0">@GetUserName(msg.FromUserId!)</p>
+
+                                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+                                            <p class="mt-2" style="padding: 15px; background-color: #f4f4f4; border-radius: 5px;">@msg.Message</p>
+                                        </div>
+                                    </div>
+                                }
+                            }
+
+                            else
+                            {
+                                if (msg.FromUserId == CurrentUser.Id)
+                                {
+                                    <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
+                                        <div class="mr-4">
+                                            <div class="avatar">
+                                                <img src="@CurrentUser.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0">You</p>
+                                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+
+                                            <p class="mt-2" style="padding: 15px; background-color: #1976d2 ; border-radius: 5px;">@msg.Message</p>
+                                        </div>
+                                    </div>
+                                }
+                                else if (Contact != null)
+                                {
+                                    <div class="d-flex flex-row my-4" style="padding-left:2vw">
+                                        <div class="mr-4">
+                                            <div class="avatar">
+                                                <img src="@Contact.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0">@Contact.UserName</p>
+                                            <small class="text-muted" style="font-size: xx-small;">@msg.CreatedDate.ToString("dd MMM, yyyy hh:mm tt")</small>
+                                            <p class="mt-2" style="padding: 15px; background-color: #f4f4f4; border-radius: 5px;">@msg.Message</p>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    }
+
+                }
+
             </div>
             <div class="d-flex flex-row px-2 p-3 bg-body-secondary">
                 <InputText Placeholder="Enter Your Message..." class="mt-n2 mx-4 flex-grow-1" @bind-Value="CurrentMessage" @oninput="OnInputChanged" @onkeydown="HandleKeyDown" />
@@ -145,37 +296,89 @@ else
     [Parameter]
     public string? ContactId { get; set; }
     public string? CurrentId { get; set; }
+    [Parameter]
+    public int? GroupId { get; set; }
     public string? CurrentMessage { get; set; }
     private bool Searching = false;
     public string? SearchTerm = "";
 
     public List<ChatMessage> SearchResults = new List<ChatMessage>();
     public List<ApplicationUser> ChatUsers = new List<ApplicationUser>();
-    private List<ChatMessage> messages = new List<ChatMessage>();
-
-    ApplicationUser? Contact = null;
+    private List<ChatMessage>? messages = new List<ChatMessage>();
+    public List<Group> Groups = new List<Group>();
+    ApplicationUser? Contact = new();
+    public Group? CurrentGroup = new();
     ApplicationUser CurrentUser = new ApplicationUser();
+    private bool ToggleGroupChat = false;
+
 
     private async Task SubmitAsync(string message)
     {
-        if (!string.IsNullOrEmpty(message) && !string.IsNullOrEmpty(Contact!.Id))
+        if (!string.IsNullOrEmpty(message) && ((Contact != null && !string.IsNullOrEmpty(Contact.Id))|| (CurrentGroup != null && CurrentGroup.Id != 0)))
         {
-            var chatHistory = new ChatMessage()
-                {
-                    FromUserId = CurrentUser.Id!,
-                    Message = message,
-                    ToUserId = Contact.Id,
-                    CreatedDate = DateTime.Now
-                };
-            await chatService.SaveMessageAsync(chatHistory);
-            CurrentMessage = string.Empty;
-            StateHasChanged();
-            await hubConnection!.SendAsync("SendMessageAsync", chatHistory, CurrentUser.Email);
+
+            if (ToggleGroupChat)
+            {
+                var groupHistory = new ChatMessage()
+                    {
+                    //FromUser = CurrentUser,
+                        FromUserId = CurrentUser.Id!,
+                        Message = message,
+                        ToGroupId = GroupId,
+                        CreatedDate = DateTime.Now
+                    };
+                await chatService.SaveMessageAsync(groupHistory);
+                CurrentMessage = string.Empty;
+                StateHasChanged();
+                await hubConnection!.SendAsync("SendMessageAsync", groupHistory, CurrentUser.Email);
+            }
+            else
+            {
+                var chatHistory = new ChatMessage()
+                    {
+                    //FromUser = CurrentUser,
+                        FromUserId = CurrentUser.Id!,
+                        Message = message,
+                        ToUserId = Contact.Id,
+                        CreatedDate = DateTime.Now
+                    };
+                await chatService.SaveMessageAsync(chatHistory);
+                CurrentMessage = string.Empty;
+                StateHasChanged();
+                await hubConnection!.SendAsync("SendMessageAsync", chatHistory, CurrentUser.Email);
+            }
 
         }
     }
+
+
     protected override async Task OnInitializedAsync()
     {
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            Searching = true;
+        }
+        else
+        {
+            Searching = false;
+        }
+        await GetUsersAsync();
+        await GetGroupsAsync();
+        var state = await AuthProvider.GetAuthenticationStateAsync();
+        var user = state.User;
+        CurrentId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (CurrentId == null)
+        {
+            Console.WriteLine("Current Id is null");
+        }
+        CurrentUser = (await userService.GetUserDetailsAsync(CurrentId!))!;
+        if (CurrentUser == null)
+        {
+            Console.WriteLine($"User is null:{CurrentId}");
+            return;
+        }
+        GroupId ??= 0;
+
         if (hubConnection == null)
         {
             hubConnection = new HubConnectionBuilder()
@@ -183,59 +386,115 @@ else
             .Build();
 
         }
+
         if (hubConnection.State == HubConnectionState.Disconnected)
         {
             await hubConnection.StartAsync();
         }
+
         hubConnection.On<ChatMessage, string>("ReceiveMessage", async (message, userName) =>
         {
-            if ((Contact!.Id == message.ToUserId && CurrentUser.Id == message.FromUserId) || (Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
+            if (ToggleGroupChat)
             {
-
-                if ((Contact.Id == message.ToUserId && CurrentUser.Id == message.FromUserId))
+                if (CurrentGroup != null && ((GroupId == message.ToGroupId && CurrentId == message.FromUserId) || (GroupId == message.ToGroupId && CurrentGroup.MemberIds.Contains(CurrentId!))))
                 {
-                    messages.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = new ApplicationUser() { Id = CurrentUser.Id, Email = CurrentUser.Email }, FromUserId = CurrentUser.Id });
-                    await hubConnection.SendAsync("ChatNotificationAsync", $"New Message From {userName}", Contact.Id, CurrentUser.Id);
+                    if (GroupId == message.ToGroupId && CurrentId == message.FromUserId)
+                    {
+                        messages!.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = new ApplicationUser() { Id = CurrentUser.Id, Email = CurrentUser.Email }, FromUserId = CurrentUser.Id });
+                        await hubConnection.SendAsync("ChatNotificationAsync", $"New Message From {userName}", CurrentGroup.Id, CurrentUser.Id);
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        messages!.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = message.FromUser, FromUserId = message.FromUserId });
+                    }
                 }
-                else if ((Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
+            }
+            else
+            {
+                if ((Contact!.Id == message.ToUserId && CurrentUser.Id == message.FromUserId) || (Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
                 {
-                    messages.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = Contact, FromUserId = Contact.Id });
+                    if ((Contact.Id == message.ToUserId && CurrentUser.Id == message.FromUserId))
+                    {
+                        messages!.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = new ApplicationUser() { Id = CurrentUser.Id, Email = CurrentUser.Email }, FromUserId = CurrentUser.Id });
+                        await hubConnection.SendAsync("ChatNotificationAsync", $"New Message From {userName}", Contact.Id, CurrentUser.Id);
+                    }
+                    else if ((Contact.Id == message.FromUserId && CurrentUser.Id == message.ToUserId))
+                    {
+                        messages!.Add(new ChatMessage { Message = message.Message, CreatedDate = message.CreatedDate, FromUser = message.FromUser, FromUserId = message.FromUserId });
+                    }
+                    await InvokeAsync(StateHasChanged);
                 }
-                await InvokeAsync(StateHasChanged);
             }
         });
-        await GetUsersAsync();
-        var state = await AuthProvider.GetAuthenticationStateAsync();
-        var user = state.User;
-        CurrentId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-        CurrentUser = await chatService.GetUserDetailsAsync(CurrentId!);
-        if (!string.IsNullOrEmpty(ContactId) && Contact != null)
+
+        if (!string.IsNullOrEmpty(ContactId))
         {
-            await LoadUserChatAsync(Contact);
+            await LoadUserChatAsync(ContactId);
         }
         else
         {
-            if (ChatUsers.Count > 0)
+
+            if (GroupId == 0 && string.IsNullOrEmpty(ContactId) && ChatUsers.Count > 0)
             {
-                await LoadUserChatAsync(ChatUsers.First());
+                await LoadUserChatAsync(ChatUsers.First().Id);
             }
+        }
+        if (GroupId.HasValue && GroupId.Value != 0)
+        {
+
+            await LoadGroupChatAsync(GroupId.Value);
         }
     }
 
-    private async Task LoadUserChatAsync(ApplicationUser user)
+
+    private async Task LoadGroupChatAsync(int groupId)
     {
-        Contact = user;
-        NavigationManager.NavigateTo($"chat/{Contact.Id}");
         messages = new List<ChatMessage>();
-        messages = await chatService.GetConversationAsync(Contact.Id);
+
+        Contact = null;
+        ToggleGroupChat = true;
+        Searching = false;
+        CurrentGroup = await groupService.GetGroupByIdAsync(groupId);
+        NavigationManager.NavigateTo($"chat/group/{groupId}");
+        Console.WriteLine("Group Details");
+        messages = await groupService.GetGroupConversationAsync(groupId);
 
     }
+
+
+    private async Task LoadUserChatAsync(string ContactId)
+    {
+        messages = new List<ChatMessage>();
+
+        CurrentGroup = null;
+        ToggleGroupChat = false;
+        Searching = false;
+        Contact = ChatUsers.FirstOrDefault(c => c.Id == ContactId);
+        // Contact = await userService.GetUserDetailsAsync(ContactId);
+        // Console.WriteLine("Contact Details");
+        // Console.WriteLine(Contact.UserName);
+        // Console.WriteLine(Contact.Email);
+        // Console.WriteLine(Contact.Id);
+
+        NavigationManager.NavigateTo($"chat/{ContactId}");
+        messages = await chatService.GetConversationAsync(ContactId);
+
+    }
+
+
+    private async Task GetGroupsAsync()
+    {
+        Groups = (await groupService.GetGroupsAsync())!;
+    }
+
+
     private async Task GetUsersAsync()
     {
-        ChatUsers = await chatService.GetUsersAsync();
-
-
+        // ChatUsers = await userService.GetUsersAsync();
+        ChatUsers = await friendService.GetFriendsAsync();
     }
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -244,6 +503,8 @@ else
 
 
     }
+
+
     private async Task HandleKeyDown(KeyboardEventArgs args)
     {
         if (args.Key == "Enter")
@@ -257,21 +518,35 @@ else
             }
         }
     }
+
+
     private void OnInputChanged(ChangeEventArgs args)
     {
         CurrentMessage = args.Value?.ToString();
     }
+
+
     private async Task Search()
     {
+        Searching = true;
         if (!string.IsNullOrEmpty(SearchTerm))
         {
             var search = SearchTerm;
             SearchTerm = string.Empty;
-            SearchResults = await chatService.SearchAsync(search, Contact!.Id);
+            if (ToggleGroupChat)
+            {
+                SearchResults = await chatService.SearchAsync(search, null, CurrentGroup!.Id);
+            }
+            else
+            {
+                SearchResults = await chatService.SearchAsync(search, Contact!.Id,null);
+            }
             StateHasChanged();
         }
 
     }
+
+
     private async Task HandleSearch(KeyboardEventArgs args)
     {
         if (args.Key == "Enter")
@@ -279,10 +554,46 @@ else
 
             await Search();
         }
+
     }
+
+
     private void HandleSearchInput(ChangeEventArgs args)
     {
-        Searching = true;
+
         SearchTerm = args.Value!.ToString();
+    }
+
+    private string GetProfileOfGroupMember(string userId)
+    {
+        if (CurrentGroup == null)
+        {
+            return "";
+        }
+        var groupMember = CurrentGroup.Members.Where(u => u.Id == userId).FirstOrDefault();
+        if (groupMember == null)
+        {
+            Console.WriteLine("group member is null");
+            return string.Empty;
+        }
+        Console.WriteLine("group member is not null");
+
+        var userPfp = groupMember.ProfileImageUrl;
+        return userPfp;
+    }
+    private string GetUserName(string userId)
+    {
+        if (CurrentGroup == null)
+        {
+            return "";
+        }
+        Console.WriteLine(userId);
+        var groupMember = CurrentGroup.Members.Where(u => u.Id == userId).FirstOrDefault();
+        if (groupMember == null)
+        {
+            return string.Empty;
+        }
+        var userName = groupMember.UserName;
+        return userName!;
     }
 }

@@ -1,16 +1,19 @@
 ﻿using ChatApp.API.Data;
+using ChatApp.API.Data.DTOs.GroupDTO;
+using ChatApp.API.Data.DTOs.UserDTO;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Packaging;
 using System.Security.Claims;
 
 namespace ChatApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class ChatController : ControllerBase
     {
 
@@ -21,29 +24,32 @@ namespace ChatApp.API.Controllers
             _userManager = userManager;
             _context = context;
         }
-        [HttpGet("users")]
-        public async Task<IActionResult> GetUsersAsync()
-        {
-            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
-            var allUsers = await _context.Users.Where(user => user.Id != userId).ToListAsync();
-            return Ok(allUsers);
-        }
-        [HttpGet("users/{userId}")]
-        public async Task<IActionResult> GetUserDetailsAsync(string userId)
-        {
-            var user = await _context.Users.Where(user => user.Id == userId).FirstOrDefaultAsync();
-            return Ok(user);
-        }
+
+
+
         [HttpPost]
         public async Task<IActionResult> SaveMessageAsync(ChatMessage message)
         {
-            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
-            message.FromUserId = userId;
+            if (message.FromUserId == null)
+            {
+                var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+                message.FromUserId = userId;
+            }
             message.CreatedDate = DateTime.Now;
-            message.ToUser = await _context.Users.Where(user => user.Id == message.ToUserId).FirstOrDefaultAsync();
+            if (message.ToUserId != null)
+            {
+                message.ToUser = await _context.Users.Where(user => user.Id == message.ToUserId).FirstOrDefaultAsync();
+            }
+            else if (message.ToGroupId != null)
+            {
+                message.ToGroup = await _context.Groups.Where(group => group.Id == message.ToGroupId).FirstOrDefaultAsync();
+            }
             await _context.ChatMessages.AddAsync(message);
             return Ok(await _context.SaveChangesAsync());
         }
+
+
+
         [HttpGet("{contactId}")]
         public async Task<IActionResult> GetConversationAsync(string contactId)
         {
@@ -65,35 +71,53 @@ namespace ChatApp.API.Controllers
                     }).ToListAsync();
             return Ok(messages);
         }
-        [HttpGet("search/{contactId}/{searchTerm}")]
+
+
+        [HttpGet("search/group/{groupId}/{searchTerm}")]
         [Authorize]
-        public async Task<IActionResult> SearchAsync(string contactId,string searchTerm)
+        public async Task<IActionResult> SearchGroupChatAsync(int groupId, string searchTerm)
         {
             var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
             var chats = await _context.ChatMessages
-                .Where(h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) )&& h.Message.Contains(searchTerm) )
+                .Where(h => (h.ToGroupId == groupId && h.Message!.Contains(searchTerm)))
+                .OrderBy(a => a.CreatedDate)
+                .Include(a => a.FromUser)
+                .Include(a => a.ToGroup)
+                .ToListAsync();
+
+            return Ok(chats);
+
+        }
+
+        [HttpGet("search/{contactId}/{searchTerm}")]
+        [Authorize]
+        public async Task<IActionResult> SearchUserChatAsync(string contactId, string searchTerm)
+        {
+            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+            var chats = await _context.ChatMessages
+                .Where(h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId)) && h.Message.Contains(searchTerm))
                 .OrderBy(a => a.CreatedDate)
                 .Include(a => a.FromUser)
                 .Include(a => a.ToUser)
                 .ToListAsync();
 
+            return Ok(chats);
+            //Dictionary<ChatMessage,List<ChatMessage>> nearbyChats = new();
 
-            Dictionary<ChatMessage,List<ChatMessage>> nearbyChats = new();
+            //foreach (var chatMessage in chats)
+            //{
+            //    var baseCreatedDate = chatMessage.CreatedDate;
+            //    var low = baseCreatedDate.AddMinutes (-5);
+            //    var high = baseCreatedDate.AddMinutes (5);
+            //    nearbyChats[chatMessage] = await _context.ChatMessages
+            //        .Where( h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) && ((h.CreatedDate >= low && h.CreatedDate <= high) || h.Message.Contains(searchTerm))))
+            //        .OrderBy( a=> a.CreatedDate)
+            //        .Include(h=>h.FromUser)
+            //        .Include(h=> h.ToUser)
+            //        .ToListAsync();
+            //}
 
-            foreach (var chatMessage in chats)
-            {
-                var baseCreatedDate = chatMessage.CreatedDate;
-                var low = baseCreatedDate.AddMinutes (-5);
-                var high = baseCreatedDate.AddMinutes (5);
-                nearbyChats[chatMessage] = await _context.ChatMessages
-                    .Where( h => ((h.FromUserId) == userId && (h.ToUserId == contactId) || (h.FromUserId == contactId && h.ToUserId == userId) && ((h.CreatedDate >= low && h.CreatedDate <= high) || h.Message.Contains(searchTerm))))
-                    .OrderBy( a=> a.CreatedDate)
-                    .Include(h=>h.FromUser)
-                    .Include(h=> h.ToUser)
-                    .ToListAsync();
-            }
-            
-            return Ok(nearbyChats);
+            //return Ok(nearbyChats);
         }
     }
 }

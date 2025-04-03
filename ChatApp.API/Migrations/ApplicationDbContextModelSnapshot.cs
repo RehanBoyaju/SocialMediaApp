@@ -22,21 +22,6 @@ namespace ChatApp.API.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("ApplicationUserGroup", b =>
-                {
-                    b.Property<string>("GroupsId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("MembersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("GroupsId", "MembersId");
-
-                    b.HasIndex("MembersId");
-
-                    b.ToTable("ApplicationUserGroup");
-                });
-
             modelBuilder.Entity("ChatApp.API.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -79,8 +64,9 @@ namespace ChatApp.API.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
 
-                    b.Property<byte[]>("ProfileImage")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<string>("ProfileImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -120,11 +106,10 @@ namespace ChatApp.API.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Message")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ToGroupId")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int?>("ToGroupId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ToUserId")
                         .HasColumnType("nvarchar(450)");
@@ -142,13 +127,19 @@ namespace ChatApp.API.Migrations
 
             modelBuilder.Entity("ChatApp.API.Data.Group", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.PrimitiveCollection<string>("MemberIds")
                         .IsRequired()
@@ -162,6 +153,46 @@ namespace ChatApp.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Groups");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.GroupMember", b =>
+                {
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("GroupId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupMembers");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.Relationship", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Relationships");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -297,40 +328,66 @@ namespace ChatApp.API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ApplicationUserGroup", b =>
-                {
-                    b.HasOne("ChatApp.API.Data.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ChatApp.API.Data.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("MembersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("ChatApp.API.Data.ChatMessage", b =>
                 {
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "FromUser")
                         .WithMany("ChatMessagesFromUsers")
-                        .HasForeignKey("FromUserId");
+                        .HasForeignKey("FromUserId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("ChatApp.API.Data.Group", "ToGroup")
                         .WithMany("ChatMessages")
-                        .HasForeignKey("ToGroupId");
+                        .HasForeignKey("ToGroupId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "ToUser")
                         .WithMany("ChatMessagesToUsers")
-                        .HasForeignKey("ToUserId");
+                        .HasForeignKey("ToUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("FromUser");
 
                     b.Navigation("ToGroup");
 
                     b.Navigation("ToUser");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.GroupMember", b =>
+                {
+                    b.HasOne("ChatApp.API.Data.Group", "Group")
+                        .WithMany("Members")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "User")
+                        .WithMany("Groups")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.Relationship", b =>
+                {
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "Friend")
+                        .WithMany()
+                        .HasForeignKey("FriendId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "User")
+                        .WithMany("Friends")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Friend");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -389,11 +446,17 @@ namespace ChatApp.API.Migrations
                     b.Navigation("ChatMessagesFromUsers");
 
                     b.Navigation("ChatMessagesToUsers");
+
+                    b.Navigation("Friends");
+
+                    b.Navigation("Groups");
                 });
 
             modelBuilder.Entity("ChatApp.API.Data.Group", b =>
                 {
                     b.Navigation("ChatMessages");
+
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }
