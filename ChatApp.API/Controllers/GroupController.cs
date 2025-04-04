@@ -15,24 +15,27 @@ namespace ChatApp.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class GroupController(UserManager<ApplicationUser> userManager, ApplicationDbContext context) : ControllerBase
     {
         public UserManager<ApplicationUser> UserManager { get; } = userManager;
         public ApplicationDbContext Context { get; } = context;
 
         [HttpGet]
+        
         public async Task<IActionResult> GetAllGroupsAsync()
         {
             var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
             var user = await Context.Users.AsNoTracking().Where(u => u.Id == userId).FirstOrDefaultAsync();
-            var groups = await Context.GroupMembers.AsNoTracking().Where(g => g.UserId == userId).Select(g => g.Group).ToListAsync();
+            var groups = await Context.GroupMembers.AsNoTracking().Include(g => g.Group).Where(g => g.UserId == userId).Select(g => g.Group).ToListAsync();
 
             return Ok(groups);
         }
+
         [HttpGet("{groupId}")]
         public async Task<IActionResult> GetGroupByIdAsync(int groupId)
         {
-            
+
             var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
             bool isMember = await Context.GroupMembers
                                                              .AsNoTracking()
@@ -68,12 +71,13 @@ namespace ChatApp.API.Controllers
                     Id = m.User.Id,
                     UserName = m.User.UserName,
                     Email = m.User.Email,
-                    ProfileImageUrl= m.User.ProfileImageUrl
+                    ImageUrl = m.User.ImageUrl
                 }).ToList(),
                 MembersCount = group.Members.Count
             };
             return Ok(groupDto);
         }
+
         [HttpPost]
         public async Task<IActionResult> CreateGroupAsync(Group createGroup)
         {
@@ -124,23 +128,32 @@ namespace ChatApp.API.Controllers
             }
         }
 
-
-
-
         [HttpPut("{groupId}")]
-        public async Task<IActionResult> UpdateGroupAsync(int groupId, Group newGroup)
+        public async Task<FormResult> UpdateGroupAsync(int groupId, [FromBody] Group newGroup)
         {
             var oldGroup = await Context.Groups.Where(g => g.Id == groupId).FirstOrDefaultAsync();
             if (oldGroup is null)
             {
-                return NotFound();
+                return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
             }
             oldGroup.Name = newGroup.Name;
             oldGroup.Description = newGroup.Description;
-            return Ok(await Context.SaveChangesAsync());
+            if (!string.IsNullOrEmpty(newGroup.ImageUrl))
+            {
+                oldGroup.ImageUrl = newGroup.ImageUrl;
+
+            }
+            await Context.SaveChangesAsync();
+            var addMembers = await AddGroupMembers(groupId, newGroup.MemberIds);
+            if(addMembers.Succeeded == false)
+            {
+                return addMembers;
+            }
+            return new FormResult() { Succeeded = true, Errors = null };
+
         }
-        [HttpPut("{groupId}/AddMembers")]
-        public async Task<IActionResult> AddGroupMembers(int groupId, List<string> memberIds)
+        //[HttpPut("{groupId}/AddMembers")]
+        public async Task<FormResult> AddGroupMembers(int groupId, List<string> memberIds)
         {
             using var transaction = await Context.Database.BeginTransactionAsync();
             try
@@ -148,7 +161,7 @@ namespace ChatApp.API.Controllers
                 var group = await Context.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
                 if (group is null)
                 {
-                    return NotFound("group not found");
+                    return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
                 }
                 var existingMemberIds = group.MemberIds;
                 var newMemberIds = memberIds.Except(existingMemberIds).ToList();
@@ -168,19 +181,21 @@ namespace ChatApp.API.Controllers
                 }
                 if (invalidMemberIds.Count != 0)
                 {
-                    return BadRequest($"Some members not found: {string.Join(", ", invalidMemberIds)}");
+               
+                    return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
                 }
                 group.MemberIds.AddRange(newMemberIds);
                 await Context.GroupMembers.AddRangeAsync(newMembers);
                 await Context.SaveChangesAsync();
 
-
-                return Ok(await Context.GroupMembers.AsNoTracking().Where(g => g.GroupId == groupId).ToListAsync());
+                await transaction.CommitAsync();
+                return new FormResult() { Succeeded = true, Errors = null };
+                //return Ok(await Context.GroupMembers.AsNoTracking().Where(g => g.GroupId == groupId).ToListAsync());
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return BadRequest(ex.Message);
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
             }
 
 
@@ -198,7 +213,7 @@ namespace ChatApp.API.Controllers
             var conversation = await Context.ChatMessages.AsNoTracking().Where(c => c.ToGroupId == groupId).OrderBy(c => c.CreatedDate).ToListAsync();
             return conversation;
         }
-       
+
 
     }
 

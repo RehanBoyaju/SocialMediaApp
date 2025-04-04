@@ -21,7 +21,7 @@ namespace ChatApp.API.Migrations
                 oldNullable: true);
 
             migrationBuilder.AddColumn<string>(
-                name: "ProfileImageUrl",
+                name: "ImageUrl",
                 table: "AspNetUsers",
                 type: "nvarchar(max)",
                 nullable: false,
@@ -32,7 +32,7 @@ namespace ChatApp.API.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "ProfileImageUrl",
+                name: "ImageUrl",
                 table: "AspNetUsers");
 
             migrationBuilder.AlterColumn<byte[]>(

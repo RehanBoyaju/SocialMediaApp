@@ -36,11 +36,11 @@ namespace BlazorChatWasm.Services
             {
                 throw new Exception("Group not found");
             }
-            var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name };
+            var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name,ImageUrl = data.ImageUrl };
             foreach (var item in data.MembersInfo)
             {
                 group.MemberIds.Add(item.Id);
-                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ProfileImageUrl = item.ProfileImageUrl });
+                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl });
             }
             return group;
         }
@@ -56,8 +56,24 @@ namespace BlazorChatWasm.Services
                 var strResponse = await response.Content.ReadAsStringAsync();
                 var jsonResponse = JsonNode.Parse(strResponse);
                 var errorsObject = jsonResponse!["errors"]!.AsObject();
-                var errorsList = errorsObject.Select(e => e.Value[0].ToString()).ToList();
+                var errorsList = errorsObject.Select(e => e.Value![0]!.ToString()).ToList();
 
+                return new FormResult() { Succeeded = false, Errors = errorsList.ToArray() };
+            }
+        }
+        public async Task<FormResult> UpdateGroup(Group group)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/group/{group.Id}", group);
+            if (response.IsSuccessStatusCode)
+            {
+                return new FormResult { Succeeded = true, Errors = null };
+            }
+            else
+            {
+                var strResponse = await response.Content.ReadAsStringAsync();
+                var jsonResponse = JsonNode.Parse(strResponse);
+                var errorsObject = jsonResponse!["errors"]!.AsObject();
+                var errorsList = errorsObject.Select(e => e.Value![0!]!.ToString()).ToList();
                 return new FormResult() { Succeeded = false, Errors = errorsList.ToArray() };
             }
         }

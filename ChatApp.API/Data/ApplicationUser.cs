@@ -8,7 +8,7 @@ namespace ChatApp.API.Data
 {
     public class ApplicationUser : IdentityUser
     {
-        public string ProfileImageUrl { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty;
         [JsonIgnore]
         public virtual ICollection<Relationship> Friends { get; set; } = new HashSet<Relationship>();
         [JsonIgnore]

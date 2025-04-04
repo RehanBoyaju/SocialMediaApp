@@ -16,6 +16,6 @@ namespace BlazorChatWasm.Models.Auth
         [Required]
         public string Password { get; set; }
 
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

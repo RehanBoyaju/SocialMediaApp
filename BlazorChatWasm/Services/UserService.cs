@@ -17,7 +17,7 @@ namespace BlazorChatWasm.Services
         }
         public async Task<ApplicationUser?> GetUserDetailsAsync(string userId)
         {
-            //Console.WriteLine("Getting user details now");
+            Console.WriteLine("Getting user details now");
             var response = await _httpClient.GetAsync($"api/users/{userId}");
 
             if (!response.IsSuccessStatusCode)
@@ -26,8 +26,8 @@ namespace BlazorChatWasm.Services
                 return null;
             }
             var data = await response.Content.ReadFromJsonAsync<ApplicationUser>();
-            //Console.WriteLine("Data received in GetUserDetails");
-            //Console.WriteLine(data.Id);
+            Console.WriteLine("Data received in GetUserDetails");
+            Console.WriteLine(data.Id);
             return data;
         }
         public async Task<List<ApplicationUser>> GetUsersAsync()

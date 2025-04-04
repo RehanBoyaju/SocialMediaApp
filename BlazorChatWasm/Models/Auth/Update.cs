@@ -14,7 +14,7 @@ namespace BlazorChatWasm.Models.Auth
         public string Email { get; set; }
 
         public string Role { get; set; } = string.Empty;
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
         
     }
 }

@@ -53,7 +53,7 @@ namespace ChatApp.API.Controllers
             {
                 UserName = model.Username,
                 Email = model.Email,
-                ProfileImageUrl = model.ProfileImageUrl ?? GetDefaultProfileService.DefaultProfile()
+                ImageUrl = model.ImageUrl ?? GetDefaultProfileService.DefaultProfile()
             };
             var result = await _userManager.CreateAsync(user, model.Password);
 
@@ -198,9 +198,9 @@ namespace ChatApp.API.Controllers
                 user.Email = updateModel.Email;
 
                 // Update profile image only if provided
-                if (!string.IsNullOrEmpty(updateModel.ProfileImageUrl))
+                if (!string.IsNullOrEmpty(updateModel.ImageUrl))
                 {
-                    user.ProfileImageUrl = updateModel.ProfileImageUrl;
+                    user.ImageUrl = updateModel.ImageUrl;
                 }
 
 
@@ -339,7 +339,7 @@ namespace ChatApp.API.Controllers
 
         public string Role { get; set; } = string.Empty;
 
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class UpdateModel
@@ -352,7 +352,7 @@ namespace ChatApp.API.Controllers
         [EmailAddress]
         public required string Email { get; set; }
         public string Role { get; set; } = string.Empty;
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
     }
 
     public class ChangeModel

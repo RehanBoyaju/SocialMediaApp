@@ -1,7 +1,11 @@
 ﻿@page "/friends/add"
+@using System.Security.Claims
 @attribute [Authorize]
+<PageTitle>Find Friends</PageTitle>
+
 <div class="row">
     <div class="col-lg-6">
+        <h3>People you may know</h3>
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
             <div class="alert alert-danger" role="alert">
@@ -10,12 +14,25 @@
             </div>
         }
         <div>
+            @if (NonFriends.Count == 0)
+            {
+                <div class="alert alert-info" role="alert">
+                    <strong>No other users found</strong>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success" role="alert">
+                    <strong>Found @NonFriends.Count users</strong>
+                </div>
+            }
             @foreach (var user in NonFriends)
             {
                 <div class="card m-4">
                     <h5 class="card-header">@user.UserName</h5>
                     <div class="card-body">
-                        <h5 class="card-title">@user.Email</h5>
+
+                        <h5 class="card-title"><img src="@user.ImageUrl" alt="User" width="40" height="40" style="border-radius:50%" />@user.Email</h5>
                         @* <p class="card-text">@user.Bio</p> *@
 
                         <button class="btn btn-primary w-20" @onclick="()=> AddFriendAsync(user.Id)">Add Friend</button>
@@ -27,7 +44,6 @@
         </div>
 
 
-        <a href="chat" class="btn btn-secondary" role="button">Return</a>
 
     </div>
 </div>
@@ -40,8 +56,8 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = false;
-
-        NonFriends = await friendService.GetNonFriendsAsync();
+        var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+        NonFriends = await friendService.GetNonFriendsAsync(userId);
     }
     private async Task AddFriendAsync(string userId)
     {

@@ -11,26 +11,29 @@
         <h3>You are not authorized!<a href="Account/Login">Redirect To Login</a></h3>
     </NotAuthorized>
 </AuthorizeView>
-@if ((string.IsNullOrEmpty(ContactId) ) && (GroupId == null || GroupId == 0))
+@if ((string.IsNullOrEmpty(ContactId)) && (GroupId == null || GroupId == 0))
 {
-    if ( ChatUsers.Count == 0 )
+    if (Loaded && ChatUsers != null && ChatUsers.Count == 0)
     {
+        <div class="btn btn-secondary">
+            <a href="friends/add">
+
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                    <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                </svg>
+
+                Add Friends?
+
+            </a>
+        </div>
         <div class="d-flex align-items-center">
             <em>No friends found</em>
 
-            <a href="friends/add" class="btn btn-se">
-                <div>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
-                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
-                        <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
-                    </svg>
-                </div>
-                Add Friends?
-                
-            </a>
+
         </div>
-    }   
-    else if(Contact==null)
+    }
+    else if (!Loaded || Contact == null || !string.IsNullOrEmpty(Contact.ImageUrl))
     {
         <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -43,27 +46,33 @@ else
     <div class="d-flex flex-grow-1 flex-row">
         <div class="d-flex flex-column px-4" style="max-height:90vh;min-height:90vh; overflow:auto;">
             <br /><br />
-            Online Friends: 
-            <a href="friends/add" class="btn btn-primary" role="button">
-                Add Friends
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
-                    <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
-                    <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
-                </svg>
-            </a>
-            <ul class="list-group">
+
+            <div class="d-flex justify-content-between align-items-center ms-2 mb-3">
+                Online Friends:
+                <span class="btn btn-outline-light">
+
+                    <a href="friends/add">
+
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                            <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                        </svg>
+
+
+                    </a>
+                </span>
+            </div>
+            <ul class="list-group gap-2">
                 @if (ChatUsers != null)
                 {
                     @foreach (var user in ChatUsers)
-                    {
+                    {   
                         if (Contact != null && user.Id == Contact.Id)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadUserChatAsync(user.Id)">
-                                <div class="d-flex">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#d3d3d3; transform: scale(1.02)" @onclick="() => LoadUserChatAsync(user.Id)">
+                                <div class="d-flex align-items-center justify-content-between gap-2" >
                                     <div class="mr-4 ">
-                                        <div class="avatar">
-                                            <img src="@user.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                                        </div>
+                                        <img src="@user.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@user.UserName</p>
@@ -73,12 +82,10 @@ else
                         }
                         else
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadUserChatAsync(user.Id)">
-                                <div class="d-flex">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#F5F5F5"  @onclick ="() => LoadUserChatAsync(user.Id)">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
                                     <div class="mr-4 ">
-                                        <div class="avatar">
-                                            <img src="@user.ProfileImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
-                                        </div>
+                                        <img src="@user.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@user.UserName</p>
@@ -90,7 +97,7 @@ else
 
                     }
                 }
-                else 
+                else
                 {
                     <li><a href="#">Add New User</a> </li>
                 }
@@ -98,8 +105,17 @@ else
             </ul>
             <hr class="dropdown-divider" />
             <br /><br />
-            Groups: <a href="group/create">Create New Group</a>
-            <ul class="list-group">
+            <div class="d-flex justify-content-between align-items-center  mb-3 ms-2">
+                Groups:
+                <span class="btn btn-outline-light ">
+                    <a href="group/create">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                        </svg>
+                    </a>
+                </span>
+            </div>
+            <ul class="list-group gap-2">
                 @if (Groups != null)
                 {
                     @foreach (var group in Groups)
@@ -107,9 +123,11 @@ else
 
                         if (group.Id != GroupId)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" @onclick="() => LoadGroupChatAsync(group.Id)">
-                                <div class="d-flex">
-
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#F5F5F5 " @onclick="() => LoadGroupChatAsync(group.Id)">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <div class="mr-4 ">
+                                        <img src="@group.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                    </div>
                                     <div>
                                         <p class="mb-0">@group.Name</p>
                                     </div>
@@ -118,9 +136,11 @@ else
                         }
                         else
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center mt-4" style="background-color:#d3d3d3; transform: scale(0.95)" @onclick="() => LoadGroupChatAsync(group.Id)">
-                                <div class="d-flex">
-
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#d3d3d3; transform: scale(1.05)" @onclick="() => LoadGroupChatAsync(group.Id)">
+                                <div class="d-flex align-items-center justify-content-between gap-2">
+                                    <div class="mr-4 ">
+                                        <img src="@group.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                    </div>
                                     <div>
                                         <p class="mb-0">@group.Name</p>
                                     </div>
@@ -144,6 +164,9 @@ else
                         {
                             if (CurrentGroup != null)
                             {
+                                <div class="avatar">
+                                    <img src="@CurrentGroup.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                </div>
                                 <span>@CurrentGroup.Name</span>
                             }
                             else
@@ -156,7 +179,7 @@ else
                             if (Contact != null)
                             {
                                 <div class="avatar">
-                                    <img src="@Contact.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                    <img src="@Contact.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                 </div>
                                 <span>@Contact.UserName</span>
 
@@ -187,6 +210,14 @@ else
                                 </button>
                             }
                         </div>
+                        <div class="mx-2">
+                            <button class="btn btn-primary pt-1" @onclick="()=>EditItem()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+                                </svg>
+                            </button>
+
+                        </div>
                     </div>
                 </div>
             </nav>
@@ -210,7 +241,7 @@ else
                                     <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@CurrentUser.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@CurrentUser.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -250,7 +281,7 @@ else
                                     <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@CurrentUser.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@CurrentUser.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -266,7 +297,7 @@ else
                                     <div class="d-flex flex-row my-4" style="padding-left:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@Contact.ProfileImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@Contact.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -303,18 +334,31 @@ else
     public string? SearchTerm = "";
 
     public List<ChatMessage> SearchResults = new List<ChatMessage>();
-    public List<ApplicationUser> ChatUsers = new List<ApplicationUser>();
+    public List<ApplicationUser>? ChatUsers = null;
     private List<ChatMessage>? messages = new List<ChatMessage>();
     public List<Group> Groups = new List<Group>();
     ApplicationUser? Contact = new();
     public Group? CurrentGroup = new();
     ApplicationUser CurrentUser = new ApplicationUser();
     private bool ToggleGroupChat = false;
+    private bool Loaded = false;
 
+    private void EditItem()
+    {
+        if (ToggleGroupChat && CurrentGroup != null)
+        {
+            NavigationManager.NavigateTo($"groups/edit/{CurrentGroup.Id}?returnUrl={NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}");
+        }
+        else if (Contact != null)
+        {
+            NavigationManager.NavigateTo($"users/edit/{Contact.Id}?returnUrl={NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}");
+        }
+
+    }
 
     private async Task SubmitAsync(string message)
     {
-        if (!string.IsNullOrEmpty(message) && ((Contact != null && !string.IsNullOrEmpty(Contact.Id))|| (CurrentGroup != null && CurrentGroup.Id != 0)))
+        if (!string.IsNullOrEmpty(message) && ((Contact != null && !string.IsNullOrEmpty(Contact.Id)) || (CurrentGroup != null && CurrentGroup.Id != 0)))
         {
 
             if (ToggleGroupChat)
@@ -354,6 +398,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        Loaded = false;
         if (!string.IsNullOrEmpty(SearchTerm))
         {
             Searching = true;
@@ -362,14 +407,16 @@ else
         {
             Searching = false;
         }
-        await GetUsersAsync();
-        await GetGroupsAsync();
+
         var state = await AuthProvider.GetAuthenticationStateAsync();
         var user = state.User;
         CurrentId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        GroupId ??= 0;
         if (CurrentId == null)
         {
             Console.WriteLine("Current Id is null");
+            NavigationManager.NavigateTo("/account/login");
+            return;
         }
         CurrentUser = (await userService.GetUserDetailsAsync(CurrentId!))!;
         if (CurrentUser == null)
@@ -377,7 +424,10 @@ else
             Console.WriteLine($"User is null:{CurrentId}");
             return;
         }
-        GroupId ??= 0;
+
+        await GetUsersAsync();
+        await GetGroupsAsync();
+       
 
         if (hubConnection == null)
         {
@@ -432,19 +482,26 @@ else
         {
             await LoadUserChatAsync(ContactId);
         }
-        else
-        {
-
-            if (GroupId == 0 && string.IsNullOrEmpty(ContactId) && ChatUsers.Count > 0)
-            {
-                await LoadUserChatAsync(ChatUsers.First().Id);
-            }
-        }
-        if (GroupId.HasValue && GroupId.Value != 0)
+        
+        else if (GroupId.HasValue && GroupId.Value != 0)
         {
 
             await LoadGroupChatAsync(GroupId.Value);
         }
+        else
+        {
+
+            if (ChatUsers != null)
+            {
+                await LoadUserChatAsync(ChatUsers.First().Id);
+            }
+        }
+
+
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        Loaded = true;
     }
 
 
@@ -457,7 +514,6 @@ else
         Searching = false;
         CurrentGroup = await groupService.GetGroupByIdAsync(groupId);
         NavigationManager.NavigateTo($"chat/group/{groupId}");
-        Console.WriteLine("Group Details");
         messages = await groupService.GetGroupConversationAsync(groupId);
 
     }
@@ -470,12 +526,15 @@ else
         CurrentGroup = null;
         ToggleGroupChat = false;
         Searching = false;
-        Contact = ChatUsers.FirstOrDefault(c => c.Id == ContactId);
-        // Contact = await userService.GetUserDetailsAsync(ContactId);
-        // Console.WriteLine("Contact Details");
-        // Console.WriteLine(Contact.UserName);
-        // Console.WriteLine(Contact.Email);
-        // Console.WriteLine(Contact.Id);
+        if (ChatUsers != null)
+        {
+            Contact = ChatUsers.FirstOrDefault(c => c.Id == ContactId);
+        }
+       
+        Console.WriteLine("Contact Details");
+        Console.WriteLine(Contact.UserName);
+        Console.WriteLine(Contact.Email);
+        Console.WriteLine(Contact.Id);
 
         NavigationManager.NavigateTo($"chat/{ContactId}");
         messages = await chatService.GetConversationAsync(ContactId);
@@ -492,7 +551,11 @@ else
     private async Task GetUsersAsync()
     {
         // ChatUsers = await userService.GetUsersAsync();
-        ChatUsers = await friendService.GetFriendsAsync();
+        if (!string.IsNullOrEmpty(CurrentId))
+        {
+            ChatUsers = await friendService.GetFriendsAsync(CurrentId);
+
+        }
     }
 
 
@@ -539,7 +602,7 @@ else
             }
             else
             {
-                SearchResults = await chatService.SearchAsync(search, Contact!.Id,null);
+                SearchResults = await chatService.SearchAsync(search, Contact!.Id, null);
             }
             StateHasChanged();
         }
@@ -578,7 +641,7 @@ else
         }
         Console.WriteLine("group member is not null");
 
-        var userPfp = groupMember.ProfileImageUrl;
+        var userPfp = groupMember.ImageUrl;
         return userPfp;
     }
     private string GetUserName(string userId)

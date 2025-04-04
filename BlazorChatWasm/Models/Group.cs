@@ -16,7 +16,7 @@ namespace BlazorChatWasm.Models
         [MaxLength(1000)]
         public  string Description { get; set; }
 
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         public List<string> MemberIds { get; set; } = [];
 

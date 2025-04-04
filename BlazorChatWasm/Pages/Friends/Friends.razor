@@ -1,7 +1,8 @@
 ﻿@page "/friends"
+@using System.Security.Claims
 @attribute [Authorize]
 <div class="row">
-    <div class="col-lg-6">
+    <div class="col-lg-6 ">
         @if (!string.IsNullOrEmpty(ErrorMessage))
         {
             <div class="alert alert-danger" role="alert">
@@ -9,9 +10,9 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
-        <div>
+        <div >
             <div >
-                <div>Your Friends</div>
+                <div class="px-3"><h3>Friends</h3></div>
 
                 <div>
                     <a href="friends/add" class="btn btn-link">
@@ -26,14 +27,15 @@
 
             @foreach (var user in UserFriends)
             {
-                <div class="card">
+                <div class="card my-2">
                     <h5 class="card-header">@user.UserName</h5>
                     <div class="card-body">
-                        <h5 class="card-title">@user.Email</h5>
+                        <h5 class="card-title"><img src="@user.ImageUrl"  width="40" height="40" style="border-radius:40%"/>@user.Email</h5>
                         @* <p class="card-text">@user.Bio</p> *@
+                        
                         @if (!IsLoading)
                         {
-                            <button class="btn btn-primary w-20" @onclick="()=> UnfriendAsync(user.Id)">Unfriend</button>
+                            <button class="btn btn-outline-danger w-20" @onclick="()=> UnfriendAsync(user.Id)">Unfriend</button>
 
                         }
                         @*else
@@ -65,8 +67,9 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = false;
+        var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
 
-        UserFriends = await friendService.GetFriendsAsync();
+        UserFriends = await friendService.GetFriendsAsync(userId);
     }
     private async Task UnfriendAsync(string userId)
     {

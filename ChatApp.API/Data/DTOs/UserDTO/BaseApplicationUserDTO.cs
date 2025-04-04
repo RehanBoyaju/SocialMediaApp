@@ -8,7 +8,7 @@
         public string UserName { get; set; } = string.Empty; // User's Name
         public string Email { get; set; } = string.Empty; // User's Email
 
-        public string ProfileImageUrl { get; set; } = string.Empty; 
+        public string ImageUrl { get; set; } = string.Empty; 
 
 
     }

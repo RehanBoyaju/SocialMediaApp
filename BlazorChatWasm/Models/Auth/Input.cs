@@ -25,7 +25,7 @@ namespace BlazorChatWasm.Models.Auth
         public string ConfirmPassword { get; set; } = "";
 
 
-        public string? ProfileImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
         public string[] Errors { get; set; } = [];
     }

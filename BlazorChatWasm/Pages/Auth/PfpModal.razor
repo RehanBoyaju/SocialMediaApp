@@ -10,7 +10,7 @@
         <div class="form-floating mb-3">
             <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg"></InputFile>
             <label for="input.Profile">Upload your photo</label>
-            <ValidationMessage For="() => Input.ProfileImageUrl" class="text-danger"></ValidationMessage>
+            <ValidationMessage For="() => Input.ImageUrl" class="text-danger"></ValidationMessage>
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
                 <div class="text-danger">@ErrorMessage</div>

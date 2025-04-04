@@ -68,16 +68,16 @@ namespace BlazorChatWasm.Services
                 return new FormResult { Succeeded = false, Errors = [ex.Message] };
             }
         }
-        public async Task<List<ApplicationUser>> GetFriendsAsync()
+        public async Task<List<ApplicationUser>> GetFriendsAsync(string userId)
         {
-            var data = await _httpClient.GetFromJsonAsync<List<ApplicationUser>>("api/friends");
+            var data = await _httpClient.GetFromJsonAsync<List<ApplicationUser>>($"api/friends/{userId}");
 
             return data!;
         }
 
-        public async Task<List<ApplicationUser>> GetNonFriendsAsync()
+        public async Task<List<ApplicationUser>> GetNonFriendsAsync(string userId)
         {
-            var data = await _httpClient.GetFromJsonAsync<List<ApplicationUser>>("api/friends/add");
+            var data = await _httpClient.GetFromJsonAsync<List<ApplicationUser>>($"api/friends/add/{userId}");
 
             return data!;
         }

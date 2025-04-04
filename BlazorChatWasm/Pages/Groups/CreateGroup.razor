@@ -1,0 +1,247 @@
+﻿@page "/groups/create"
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using BlazorChatWasm.Models.DTOs
+
+<PageTitle>New Group</PageTitle>
+
+<div class="row">
+    <div class="col-lg-6">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>@ErrorMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <EditForm Model="NewGroup" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="CreateGroupAsync" FormName="CreateGroup">
+            <DataAnnotationsValidator />
+            <h2>Create a new group.</h2>
+            <hr />
+            <ValidationSummary class="text-danger" role="alert" />
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="NewGroup.Name" id="NewGroup.Name" class="form-control" autocomplete="username" aria-required="true" placeholder="Group Name" />
+                <label for="NewGroup.Name">Name</label>
+                <ValidationMessage For="() => NewGroup.Name" class="text-danger" />
+            </div>
+            <div class="form-floating mb-3">
+                <InputText @bind-Value="NewGroup.Description" id="NewGroup.Description" class="form-control" autocomplete="username" aria-required="true" placeholder="Group Description" />
+                <label for="NewGroup.Description">Description</label>
+                <ValidationMessage For="() => NewGroup.Description" class="text-danger" />
+            </div>
+
+            <div class="form-floating mb-3">
+                <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg, .png"></InputFile>
+                <label for="input.Profile">Upload your photo</label>
+                <ValidationMessage For="() => NewGroup.ImageUrl" class="text-danger"></ValidationMessage>
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="text-danger">@ErrorMessage</div>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(ImagePreviewUrl))
+            {
+                <div>
+                    <img src="@ImagePreviewUrl" alt="Profile Preview" class="img-thumbnail" />
+                </div>
+            }
+
+            <div class="form-floating mb-3">
+                <form @onsubmit="SearchMember">
+                    <input type="search" @bind-Value="SearchFriend" @bind-Value:event="onchange" id="search" class="form-control" autocomplete="username" aria-required="true" placeholder="Search friends...">
+                    <button type="submit" class="btn btn-sm btn-outline-info mt-3">
+                        Search
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
+                        </svg>
+                    </button>
+                </form>
+
+                @if (Searching)
+                {
+                    @if (SearchResults.Any())
+                    {
+                        <div class="mt-3">
+                            <h5>Search Results</h5>
+                            <ul class="list-group">
+                                @foreach (var user in SearchResults)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <img src="@user.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
+                                            <span>@user.UserName</span>
+                                        </div>
+                                        @if (NewGroup.MemberIds.Contains(user.Id))
+                                        {
+                                            <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(user.Id))">
+                                                Remove
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button type="button" class="btn btn-primary btn-sm" @onclick="@(() => AddMember(user.Id))">
+                                                Add
+                                            </button>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+
+                    }
+                    else
+                    {
+                        <em>No search results found</em>
+                    }
+                }
+            </div>
+
+            @if (NewGroup.MemberIds.Any())
+            {
+                <div class="mb-3">
+                    <h5>Selected Members (@NewGroup.MemberIds.Count)</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="@User.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
+                                <span>@User.UserName</span>
+                            </div>
+
+                        </li>
+                        @foreach(var memberId in NewGroup.MemberIds)
+                        {
+                            var member = Friends?.FirstOrDefault(f => f.Id == memberId);
+                            if (member != null)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <img src="@member.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
+                                        <span>@member.UserName</span>
+                                    </div>
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(member.Id))">
+                                        Remove
+                                    </button>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            }
+
+            <button type="submit" class="w-100 btn btn-lg btn-primary">Create Group</button>
+            <a href="@ReturnUrl" class="btn btn-outline-primary mt-2 w-100" role="button">Cancel</a>
+            <input type="hidden" @bind="ReturnUrl" />
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    GroupModel NewGroup = new GroupModel { MemberIds = new List<string>() }; // Initialize MemberIds
+
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; } = "/chat";
+    private string? ImagePreviewUrl;
+    private string? ErrorMessage;
+    private List<ApplicationUser>? Friends { get; set; } = null;
+    private List<ApplicationUser> SearchResults { get; set; } = new();
+    private string SearchFriend { get; set; } = string.Empty;
+    private bool Searching = false;
+    public ApplicationUser? User { get; set; } = new();
+    protected override async Task OnInitializedAsync()
+    {
+        Searching = false;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var userId = (await customAuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(_=>_.Type== ClaimTypes.NameIdentifier)!.Value;
+            User = await userService.GetUserDetailsAsync(userId);
+            Friends = await friendService.GetFriendsAsync(userId);
+            SearchResults = Friends?.ToList() ?? new List<ApplicationUser>();
+        }
+      
+    }
+
+    private void AddMember(string userId)
+    {
+        if (!NewGroup.MemberIds.Contains(userId))
+        {
+            NewGroup.MemberIds.Add(userId);
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveMember(string userId)
+    {
+        NewGroup.MemberIds.Remove(userId);
+        StateHasChanged();
+    }
+
+    private void SearchMember()
+    {
+        Searching = true;
+        if (Friends == null) return;
+
+        if (string.IsNullOrEmpty(SearchFriend))
+        {
+            SearchResults = Friends.ToList();
+        }
+        else
+        {
+            SearchResults = Friends.Where(f => 
+                f.UserName?.Contains(SearchFriend, StringComparison.OrdinalIgnoreCase) == true || 
+                f.Email?.Contains(SearchFriend, StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
+        }
+    }
+
+    private async Task CreateGroupAsync()
+    {
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            NewGroup.MemberIds.Add(User.Id);
+            var result = await groupService.AddGroup(new Group()
+            {
+                Name = NewGroup.Name,
+                Description = NewGroup.Description,
+                MemberIds = NewGroup.MemberIds,
+                ImageUrl = ImagePreviewUrl
+            });
+
+            if (result.Succeeded)
+            {
+                NavigationManager.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+            }
+            else
+            {
+                ErrorMessage = result.Errors?.FirstOrDefault() ?? "An unknown error occurred";
+            }
+        }
+        Searching = false;
+    }
+
+    private async Task HandleFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            
+            if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg" && file.ContentType != "image/png")
+            {
+                ErrorMessage = "Only jpg, jpegs and pngs are allowed";
+                ImagePreviewUrl = null;
+                return;
+            }
+            
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                ErrorMessage = "File size should be less than 2MB";
+                ImagePreviewUrl = null;
+                return;
+            }
+            
+            ErrorMessage = null;
+            ImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+}

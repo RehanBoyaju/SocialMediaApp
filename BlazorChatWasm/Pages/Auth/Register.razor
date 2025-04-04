@@ -48,7 +48,7 @@
             <div class="form-floating mb-3">
             <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg, .png"></InputFile>
             <label for="input.Profile">Upload your photo</label>
-            <ValidationMessage For="() => Input.ProfileImageUrl" class="text-danger"></ValidationMessage>
+            <ValidationMessage For="() => Input.ImageUrl" class="text-danger"></ValidationMessage>
             @if (!string.IsNullOrEmpty(ErrorMessage))
             {
                 <div class="text-danger">@ErrorMessage</div>
@@ -68,13 +68,13 @@
 
             @*             if (!modalResult.Cancelled) *@
             @*             { *@
-            @*                 Input.ProfileImageUrl = modalResult.Data?.ToString(); // ✅ Set the profile image *@
+            @*                 Input.ImageUrl = modalResult.Data?.ToString(); // ✅ Set the profile image *@
             @*                 StateHasChanged(); *@
             @*             } *@
             @*     } *@
             @*     private void HandleProfileImageSaved(string? imageUrl) *@
             @*     { *@
-            @*             Input.ProfileImageUrl = imageUrl; *@
+            @*             Input.ImageUrl = imageUrl; *@
             @*     } *@
             }
 
@@ -112,7 +112,7 @@
                     Email = Input.Email,
                     Username = Input.Username,
                     Password = Input.Password,
-                    ProfileImageUrl = ImagePreviewUrl
+                    ImageUrl = ImagePreviewUrl
                 });
 
             if (result.Succeeded)

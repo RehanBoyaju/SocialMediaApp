@@ -108,13 +108,13 @@ namespace ChatApp.API.Controllers
                     Id = updatedUser.Id,
                     UserName = updatedUser.UserName!,
                     Email = updatedUser.Email!,
-                    ProfileImageUrl = updatedUser.ProfileImageUrl,
+                    ImageUrl = updatedUser.ImageUrl,
                     Friends = updatedUser.Friends.Select(r => new BaseApplicationUserDTO
                     {
                         Id = r.FriendId,
                         UserName = r.Friend.UserName!,
                         Email = r.Friend.Email!,
-                        ProfileImageUrl = r.Friend.ProfileImageUrl
+                        ImageUrl = r.Friend.ImageUrl
                     }).ToList()
 
                 };
@@ -130,10 +130,10 @@ namespace ChatApp.API.Controllers
         }
 
         
-        [HttpGet]
-        public async Task<IActionResult> GetFriendsAsync()
+        [HttpGet("{userId}")]
+        public async Task<IActionResult> GetFriendsAsync(string userId)
         {
-            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+            //var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
 
             var friends = await _context.Relationships
                 .AsNoTracking()
@@ -149,16 +149,17 @@ namespace ChatApp.API.Controllers
                     Id = f.Id,
                     Email = f.Email!,
                     UserName = f.UserName!,
-                    ProfileImageUrl = f.ProfileImageUrl
+                    ImageUrl = f.ImageUrl
                 };
             });
 
             return Ok(result);
         }
-        [HttpGet("add")]
-        public async Task<IActionResult> GetNonFriendsAsync()
+
+        [HttpGet("add/{userId}")]
+        public async Task<IActionResult> GetNonFriendsAsync(string userId)
         {
-            var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+          //  var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
 
             var nonfriends = await _context.Users.AsNoTracking()
                 .Where(u => u.Id != userId && !_context.Relationships.Any(f => f.UserId == userId && f.FriendId == u.Id))
@@ -167,11 +168,12 @@ namespace ChatApp.API.Controllers
                     Id = f.Id,
                     Email = f.Email!,
                     UserName = f.UserName!,
-                    ProfileImageUrl = f.ProfileImageUrl
+                    ImageUrl = f.ImageUrl
                 }).ToListAsync();
 
             return Ok(nonfriends);
         }
+
         [HttpDelete("{friendId}")]
         public async Task<FormResult> UnfriendAsync(string friendId)
         {

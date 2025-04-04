@@ -8,7 +8,7 @@ namespace ChatApp.API.Data.DTOs.UserDTO
         public string UserName { get; set; } = string.Empty; 
         public string Email { get; set; } = string.Empty;
 
-        public string ProfileImageUrl = string.Empty;
+        public string ImageUrl = string.Empty;
 
         public  ICollection<BaseApplicationUserDTO> Friends { get; set; } = new List<BaseApplicationUserDTO>();
 

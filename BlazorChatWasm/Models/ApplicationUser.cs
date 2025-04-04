@@ -6,7 +6,7 @@ namespace BlazorChatWasm.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        public string ProfileImageUrl { get; set; } = string.Empty;
+        public string ImageUrl { get; set; } = string.Empty;
         public List<string>? FriendIDs { get; set; }
         [JsonIgnore]
         public virtual ICollection<ApplicationUser> Friends { get; set; }
