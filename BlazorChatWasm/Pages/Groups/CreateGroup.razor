@@ -14,7 +14,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
-        <EditForm Model="NewGroup" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="CreateGroupAsync" FormName="CreateGroup">
+        <EditForm Model="NewGroup"  method="post" OnValidSubmit="CreateGroupAsync" FormName="CreateGroup">
             <DataAnnotationsValidator />
             <h2>Create a new group.</h2>
             <hr />
@@ -32,7 +32,7 @@
 
             <div class="form-floating mb-3">
                 <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg, .png"></InputFile>
-                <label for="input.Profile">Upload your photo</label>
+                <label for="input.Profile">Upload group photo</label>
                 <ValidationMessage For="() => NewGroup.ImageUrl" class="text-danger"></ValidationMessage>
                 @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
@@ -129,8 +129,8 @@
             }
 
             <button type="submit" class="w-100 btn btn-lg btn-primary">Create Group</button>
-            <a href="@ReturnUrl" class="btn btn-outline-primary mt-2 w-100" role="button">Cancel</a>
-            <input type="hidden" @bind="ReturnUrl" />
+            <a href="@ReturnUrl" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
+            <p>Return URL is @ReturnUrl</p>
         </EditForm>
     </div>
 </div>
@@ -139,7 +139,7 @@
     GroupModel NewGroup = new GroupModel { MemberIds = new List<string>() }; // Initialize MemberIds
 
     [SupplyParameterFromQuery]
-    public string? ReturnUrl { get; set; } = "/chat";
+    public string? ReturnUrl { get; set; } 
     private string? ImagePreviewUrl;
     private string? ErrorMessage;
     private List<ApplicationUser>? Friends { get; set; } = null;

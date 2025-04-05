@@ -17,12 +17,46 @@ namespace BlazorChatWasm.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<Group>?> GetGroupsAsync()
+        public async Task<List<Group>?> GetOtherGroupsAsync()
         {
-            var data = await _httpClient.GetFromJsonAsync<List<Group>>("api/group");
+            
+            var data = await _httpClient.GetFromJsonAsync<List<Group>>("api/group/other");
+            return data;
+        }
+
+        public async Task<List<Group>?> GetGroupsAsync(string userId)
+        {
+            var data = await _httpClient.GetFromJsonAsync<List<Group>>($"api/group/all/{userId}");
 
             return data;
         }
+
+        public async Task<FormResult> LeaveGroupAsync(int groupId)
+        {
+            var response = await _httpClient.DeleteAsync($"api/group/leave/{groupId}");
+            if (response.IsSuccessStatusCode)
+            {
+                return new FormResult { Succeeded = true, Errors = null };
+            }
+            else
+            {
+                var formResult = await response.Content.ReadFromJsonAsync<FormResult>();
+                if (formResult == null)
+                {
+                    return new FormResult() { Succeeded = true, Errors = ["Unknown error occured"] };
+
+                }
+                if (formResult.Succeeded)
+                {
+                    return new FormResult() { Succeeded = true, Errors = null };
+                }
+                else
+                {
+                    return new FormResult() { Succeeded = false, Errors = formResult.Errors };
+                }
+            }
+        }
+
         public async Task<List<ChatMessage>?> GetGroupConversationAsync(int groupId)
         {
             var data = await _httpClient.GetFromJsonAsync<List<ChatMessage>>($"api/group/chat/{groupId}");
@@ -36,7 +70,7 @@ namespace BlazorChatWasm.Services
             {
                 throw new Exception("Group not found");
             }
-            var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name,ImageUrl = data.ImageUrl };
+            var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name, ImageUrl = data.ImageUrl };
             foreach (var item in data.MembersInfo)
             {
                 group.MemberIds.Add(item.Id);
@@ -61,7 +95,7 @@ namespace BlazorChatWasm.Services
                 return new FormResult() { Succeeded = false, Errors = errorsList.ToArray() };
             }
         }
-        public async Task<FormResult> UpdateGroup(Group group)
+        public async Task<FormResult> UpdateGroupAsync(Group group)
         {
             var response = await _httpClient.PutAsJsonAsync($"api/group/{group.Id}", group);
             if (response.IsSuccessStatusCode)
@@ -75,6 +109,31 @@ namespace BlazorChatWasm.Services
                 var errorsObject = jsonResponse!["errors"]!.AsObject();
                 var errorsList = errorsObject.Select(e => e.Value![0!]!.ToString()).ToList();
                 return new FormResult() { Succeeded = false, Errors = errorsList.ToArray() };
+            }
+        }
+
+        public async Task<FormResult> JoinGroupAsync(int groupId)
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/group/join",groupId);
+            if (response.IsSuccessStatusCode)
+            {
+                return new FormResult { Succeeded = true, Errors = null };
+            }
+            else
+            {
+                var formResult = await response.Content.ReadFromJsonAsync<FormResult>();
+                if(formResult == null)
+                {
+                    return new FormResult() { Succeeded = true, Errors = ["Unknown error occured"] };
+                }
+                if(formResult.Succeeded)
+                {
+                    return new FormResult() { Succeeded = true, Errors = null };
+                }
+                else
+                {
+                    return new FormResult() { Succeeded = false, Errors = formResult.Errors };
+                }
             }
         }
     }

@@ -28,12 +28,13 @@
             }
             @foreach (var user in NonFriends)
             {
-                <div class="card m-4">
+                <div class="card my-4">
                     <h5 class="card-header">@user.UserName</h5>
                     <div class="card-body">
 
                         <h5 class="card-title"><img src="@user.ImageUrl" alt="User" width="40" height="40" style="border-radius:50%" />@user.Email</h5>
                         @* <p class="card-text">@user.Bio</p> *@
+                        <button class="btn btn-info w-20" @onclick="()=> ShowModal(user.Id)">View Profile</button>
 
                         <button class="btn btn-primary w-20" @onclick="()=> AddFriendAsync(user.Id)">Add Friend</button>
 
@@ -41,7 +42,14 @@
                     </div>
                 </div>
             }
+
+
+        <div class="btn btn-outline-light">
+            <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
         </div>
+        </div>
+
+
 
 
 
@@ -49,10 +57,19 @@
 </div>
 @code {
     public bool IsLoading;
-
+    [SupplyParameterFromQuery]  
+    public string? ReturnUrl { get; set; }
     List<ApplicationUser> NonFriends = new List<ApplicationUser>();
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
     private string? ErrorMessage;
 
+    private void ShowModal(string friendId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("UserId", friendId);
+        Modal.Show<UserModal>("Profile", parameters);
+
+    }
     protected override async Task OnInitializedAsync()
     {
         IsLoading = false;

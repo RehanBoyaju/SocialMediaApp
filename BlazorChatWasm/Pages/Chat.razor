@@ -1,9 +1,8 @@
-﻿@using Microsoft.AspNetCore.SignalR
-@using Microsoft.AspNetCore.SignalR.Client
-@using System.Security.Claims
+﻿
 @page "/chat"
 @page "/chat/{ContactId}"
 @page "/chat/group/{GroupId:int?}"
+@using BlazorChatWasm.Pages.Groups
 @attribute [Authorize]
 <PageTitle>Chat</PageTitle>
 <AuthorizeView>
@@ -16,7 +15,7 @@
     if (Loaded && ChatUsers != null && ChatUsers.Count == 0)
     {
         <div class="btn btn-secondary">
-            <a href="friends/add">
+            <a href="friends/add?ReturnUrl=chat">
 
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
                     <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
@@ -51,7 +50,7 @@ else
                 Online Friends:
                 <span class="btn btn-outline-light">
 
-                    <a href="friends/add">
+                    <a href="friends/add?ReturnUrl=chat">
 
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
                             <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
@@ -108,7 +107,7 @@ else
             <div class="d-flex justify-content-between align-items-center  mb-3 ms-2">
                 Groups:
                 <span class="btn btn-outline-light ">
-                    <a href="group/create">
+                    <a href="groups/join?ReturnUrl=chat">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
                         </svg>
@@ -343,15 +342,23 @@ else
     private bool ToggleGroupChat = false;
     private bool Loaded = false;
 
+    [CascadingParameter] IModalService Modal { get; set; } = default!;
+
     private void EditItem()
     {
         if (ToggleGroupChat && CurrentGroup != null)
         {
-            NavigationManager.NavigateTo($"groups/edit/{CurrentGroup.Id}?returnUrl={NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}");
+            var parameters = new ModalParameters();
+            parameters.Add("GroupId", CurrentGroup.Id);
+
+            Modal.Show<GroupModal>("Group", parameters);
         }
         else if (Contact != null)
         {
-            NavigationManager.NavigateTo($"users/edit/{Contact.Id}?returnUrl={NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}");
+            var parameters = new ModalParameters();
+            parameters.Add("UserId", Contact.Id);
+
+            Modal.Show<UserModal>("Profile", parameters);
         }
 
     }
@@ -427,7 +434,7 @@ else
 
         await GetUsersAsync();
         await GetGroupsAsync();
-       
+
 
         if (hubConnection == null)
         {
@@ -482,7 +489,7 @@ else
         {
             await LoadUserChatAsync(ContactId);
         }
-        
+
         else if (GroupId.HasValue && GroupId.Value != 0)
         {
 
@@ -499,6 +506,8 @@ else
 
 
     }
+
+
     protected override void OnAfterRender(bool firstRender)
     {
         Loaded = true;
@@ -530,11 +539,11 @@ else
         {
             Contact = ChatUsers.FirstOrDefault(c => c.Id == ContactId);
         }
-       
-        Console.WriteLine("Contact Details");
-        Console.WriteLine(Contact.UserName);
-        Console.WriteLine(Contact.Email);
-        Console.WriteLine(Contact.Id);
+
+        // Console.WriteLine("Contact Details");
+        // Console.WriteLine(Contact.UserName);
+        // Console.WriteLine(Contact.Email);
+        // Console.WriteLine(Contact.Id);
 
         NavigationManager.NavigateTo($"chat/{ContactId}");
         messages = await chatService.GetConversationAsync(ContactId);
@@ -544,7 +553,8 @@ else
 
     private async Task GetGroupsAsync()
     {
-        Groups = (await groupService.GetGroupsAsync())!;
+        if (CurrentId is null) return;
+        Groups = (await groupService.GetGroupsAsync(CurrentId))!;
     }
 
 
@@ -636,10 +646,8 @@ else
         var groupMember = CurrentGroup.Members.Where(u => u.Id == userId).FirstOrDefault();
         if (groupMember == null)
         {
-            Console.WriteLine("group member is null");
             return string.Empty;
         }
-        Console.WriteLine("group member is not null");
 
         var userPfp = groupMember.ImageUrl;
         return userPfp;
@@ -650,7 +658,7 @@ else
         {
             return "";
         }
-        Console.WriteLine(userId);
+        // Console.WriteLine(userId);
         var groupMember = CurrentGroup.Members.Where(u => u.Id == userId).FirstOrDefault();
         if (groupMember == null)
         {

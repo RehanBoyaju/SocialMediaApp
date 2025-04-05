@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace ChatApp.API.Data
@@ -17,12 +18,14 @@ namespace ChatApp.API.Data
 
         public string? ImageUrl { get; set; }
 
-        public List<string> MemberIds { get; set; } = [];
-
         [JsonIgnore]
         public virtual ICollection<GroupMember>? Members { get; set; } = new HashSet<GroupMember>();
-
+        [JsonIgnore]
         public int MembersCount => Members!.Count;
+
+        [NotMapped]
+        [JsonIgnore]
+        public virtual List<string> MemberIds { get; set; } = []; 
 
         [JsonIgnore]
         public virtual ICollection<ChatMessage>? ChatMessages { get; set; } = new HashSet<ChatMessage>();

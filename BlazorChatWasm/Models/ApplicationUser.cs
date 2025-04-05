@@ -7,7 +7,6 @@ namespace BlazorChatWasm.Models
     public class ApplicationUser : IdentityUser
     {
         public string ImageUrl { get; set; } = string.Empty;
-        public List<string>? FriendIDs { get; set; }
         [JsonIgnore]
         public virtual ICollection<ApplicationUser> Friends { get; set; }
         [JsonIgnore]
@@ -19,7 +18,6 @@ namespace BlazorChatWasm.Models
         public ApplicationUser()
         {
             Id = string.Empty;
-            FriendIDs = [];
             Friends = new HashSet<ApplicationUser>();
             ChatMessagesFromUsers = new HashSet<ChatMessage>();
             ChatMessagesToUsers = new HashSet<ChatMessage>();

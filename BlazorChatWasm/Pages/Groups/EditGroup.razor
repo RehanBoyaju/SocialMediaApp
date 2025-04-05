@@ -231,7 +231,7 @@
     {
         if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
         {
-            var result = await groupService.UpdateGroup(new Group()
+            var result = await groupService.UpdateGroupAsync(new Group()
                 {
                     Id = GroupId!.Value,
                     Name = UpdateGroup.Name,

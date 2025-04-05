@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using System.Formats.Asn1;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
@@ -21,11 +22,78 @@ namespace ChatApp.API.Controllers
         public UserManager<ApplicationUser> UserManager { get; } = userManager;
         public ApplicationDbContext Context { get; } = context;
 
-        [HttpGet]
-        
+        [HttpPut("join")]
+        public async Task<FormResult> JoinGroupAsync([FromBody]int groupId)
+        {
+            using var transaction = await Context.Database.BeginTransactionAsync();
+            try
+            {
+                var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+                var group = await Context.Groups.Include(g => g.Members).FirstOrDefaultAsync(g => g.Id == groupId);
+                if (group is null)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
+                }
+                if (group.Members!.Any(m => m.UserId == userId))
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Already a member"] };
+                }
+                group.Members!.Add(new GroupMember { GroupId = groupId, UserId = userId });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
+            }
+            finally
+            {
+                await Context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            return new FormResult() { Succeeded = true, Errors = null };
+        }
+        [HttpGet("all")]
         public async Task<IActionResult> GetAllGroupsAsync()
         {
             var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+            var groups = await Context.Groups.AsNoTracking().ToListAsync();
+            return Ok(groups);
+        }
+        [HttpGet("other")]
+        public async Task<IActionResult> GetOtherGroupsAsync()
+        {
+            var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+            var user = await Context.Users.AsNoTracking().Where(u => u.Id == userId).FirstOrDefaultAsync();
+
+            //var groups = await Context.Groups
+            //    .AsNoTracking()
+            //    .Where(g => !g.MemberIds.Contains(userId))
+            //    .ToListAsync();
+            //var groups = await Context.GroupMembers.AsNoTracking()
+            //    .Include(g => g.Group)
+            //    .Where(g => g.UserId != userId && !Context.GroupMembers.Any(m => m.UserId == userId && m.GroupId  == g.GroupId)).ToListAsync();
+
+            //return Ok(groups);
+            //var allGroups = ((List<ApplicationUser>)await GetAllGroupsAsync()).ToHashSet();
+            //var userGroups = ((List<ApplicationUser>)await GetGroupsAsync(userId)).ToHashSet();
+            //var otherGroups  = allGroups.Except(userGroups).ToList();
+
+            var userGroupIds = await Context.GroupMembers
+                                                                    .Where(gm => gm.UserId == userId)
+                                                                    .Select(gm => gm.GroupId)
+                                                                    .ToListAsync();
+
+            var otherGroups = await Context.Groups
+                .Where(g => !userGroupIds.Contains(g.Id))
+                .ToListAsync();
+
+            return Ok(otherGroups);
+        }
+
+        [HttpGet("all/{userId}")]
+        public async Task<IActionResult> GetGroupsAsync(string userId)
+        {
+            //var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
             var user = await Context.Users.AsNoTracking().Where(u => u.Id == userId).FirstOrDefaultAsync();
             var groups = await Context.GroupMembers.AsNoTracking().Include(g => g.Group).Where(g => g.UserId == userId).Select(g => g.Group).ToListAsync();
 
@@ -96,12 +164,13 @@ namespace ChatApp.API.Controllers
                 // Find members
                 var invalidMembers = new List<string>();
                 var groupMembers = new List<GroupMember>();
-
+                var groupMemberIds = new List<string>();
                 foreach (var memberId in createGroup.MemberIds)
                 {
                     var member = await UserManager.FindByIdAsync(memberId);
                     if (member is not null)
                     {
+                        groupMemberIds.Add(memberId);
                         groupMembers.Add(new GroupMember { GroupId = createGroup.Id, UserId = memberId });
                     }
                     else
@@ -117,6 +186,7 @@ namespace ChatApp.API.Controllers
                 }
 
                 // Add all valid members in one go
+        
                 await Context.GroupMembers.AddRangeAsync(groupMembers);
                 await Context.SaveChangesAsync();
 
@@ -145,13 +215,14 @@ namespace ChatApp.API.Controllers
             }
             await Context.SaveChangesAsync();
             var addMembers = await AddGroupMembers(groupId, newGroup.MemberIds);
-            if(addMembers.Succeeded == false)
+            if (addMembers.Succeeded == false)
             {
                 return addMembers;
             }
             return new FormResult() { Succeeded = true, Errors = null };
 
         }
+
         //[HttpPut("{groupId}/AddMembers")]
         public async Task<FormResult> AddGroupMembers(int groupId, List<string> memberIds)
         {
@@ -163,7 +234,7 @@ namespace ChatApp.API.Controllers
                 {
                     return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
                 }
-                var existingMemberIds = group.MemberIds;
+                var existingMemberIds = await Context.GroupMembers.Where(u=> u.GroupId ==group.Id).Select( g=> g.UserId).ToHashSetAsync();
                 var newMemberIds = memberIds.Except(existingMemberIds).ToList();
                 var invalidMemberIds = new List<string>();
                 var newMembers = new List<GroupMember>();
@@ -181,10 +252,10 @@ namespace ChatApp.API.Controllers
                 }
                 if (invalidMemberIds.Count != 0)
                 {
-               
+
                     return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
                 }
-                group.MemberIds.AddRange(newMemberIds);
+                //group.MemberIds.AddRange(newMemberIds);
                 await Context.GroupMembers.AddRangeAsync(newMembers);
                 await Context.SaveChangesAsync();
 
@@ -200,6 +271,8 @@ namespace ChatApp.API.Controllers
 
 
         }
+
+
         [Authorize(Policy = "Administrator")]
         [HttpDelete("delete/{groupId}")]
         public async Task<IActionResult> DeleteGroupAsync(int groupId)
@@ -207,6 +280,8 @@ namespace ChatApp.API.Controllers
             var delete = await Context.Groups.Where(g => g.Id == groupId).ExecuteDeleteAsync();
             return NoContent();
         }
+
+
         [HttpGet("chat/{groupId}")]
         public async Task<List<ChatMessage>> GetGroupConversationAsync(int groupId)
         {
@@ -214,6 +289,39 @@ namespace ChatApp.API.Controllers
             return conversation;
         }
 
+        [HttpDelete("leave/{groupId}")]
+        public async Task<FormResult> LeaveGroupAsync(int groupId)
+        {
+            using var transaction = await Context.Database.BeginTransactionAsync();
+            try
+            {
+                var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+                if (userId is null)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["User not found"] };
+                }
+                var group = await Context.GroupMembers.FirstOrDefaultAsync(g => g.GroupId == groupId && g.UserId == userId);
+
+                if (group is null)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
+                }
+                Context.GroupMembers.Remove(group);
+                await Context.SaveChangesAsync();
+
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
+            }
+            finally
+            {
+                await transaction.CommitAsync();
+            }
+            return new FormResult() { Succeeded = true, Errors = null };
+
+        }
 
     }
 

@@ -14,6 +14,9 @@ a, .btn-link {
     align-items: center;
     gap: 8px; /* Adjust spacing */
 }
+.blazored-modal, .modalbutton {
+    border-radius: .5rem .5rem .5rem .5rem !important;
+}
 
 
 .btn-primary {

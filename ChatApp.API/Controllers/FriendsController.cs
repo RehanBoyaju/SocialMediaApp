@@ -156,6 +156,21 @@ namespace ChatApp.API.Controllers
             return Ok(result);
         }
 
+        [HttpGet("count/{userId}")]
+        public async Task<IActionResult> GetFriendsCountAsync(string userId)
+        {
+            //var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
+
+            var result = await _context.Relationships
+                .AsNoTracking()
+                .Include(f => f.Friend)
+                .Where(u => u.UserId == userId)
+                .CountAsync() ;
+
+
+            return Ok(result);
+        }
+
         [HttpGet("add/{userId}")]
         public async Task<IActionResult> GetNonFriendsAsync(string userId)
         {

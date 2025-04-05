@@ -1,0 +1,105 @@
+﻿@page "/groups"
+@using System.Security.Claims
+@attribute [Authorize]
+<div class="row">
+    <div class="col-lg-6 ">
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>@ErrorMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <div>
+            <div>
+                <div class="px-3"><h3>Groups</h3></div>
+
+                <div>
+                    <a href="groups/create?ReturnUrl=/groups" class="btn btn-link text-decoration-none d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                        </svg>
+                        <span class="px-2 mb-1"> Create New Group?</span>
+
+                    </a>
+                </div>
+                <div>
+                    <a href="groups/join" class="btn btn-link  text-decoration-none d-flex align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-patch-plus" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 5.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V10a.5.5 0 0 1-1 0V8.5H6a.5.5 0 0 1 0-1h1.5V6a.5.5 0 0 1 .5-.5" />
+                            <path d="m10.273 2.513-.921-.944.715-.698.622.637.89-.011a2.89 2.89 0 0 1 2.924 2.924l-.01.89.636.622a2.89 2.89 0 0 1 0 4.134l-.637.622.011.89a2.89 2.89 0 0 1-2.924 2.924l-.89-.01-.622.636a2.89 2.89 0 0 1-4.134 0l-.622-.637-.89.011a2.89 2.89 0 0 1-2.924-2.924l.01-.89-.636-.622a2.89 2.89 0 0 1 0-4.134l.637-.622-.011-.89a2.89 2.89 0 0 1 2.924-2.924l.89.01.622-.636a2.89 2.89 0 0 1 4.134 0l-.715.698a1.89 1.89 0 0 0-2.704 0l-.92.944-1.32-.016a1.89 1.89 0 0 0-1.911 1.912l.016 1.318-.944.921a1.89 1.89 0 0 0 0 2.704l.944.92-.016 1.32a1.89 1.89 0 0 0 1.912 1.911l1.318-.016.921.944a1.89 1.89 0 0 0 2.704 0l.92-.944 1.32.016a1.89 1.89 0 0 0 1.911-1.912l-.016-1.318.944-.921a1.89 1.89 0 0 0 0-2.704l-.944-.92.016-1.32a1.89 1.89 0 0 0-1.912-1.911z" />
+                        </svg>
+                        <span class="px-2 mb-1">Join Group?</span>
+
+                    </a>
+                </div>
+            </div>
+
+            @foreach (var group in UserGroups)
+            {
+                <div class="card my-2">
+                    <h5 class="card-header">@group.Name</h5>
+                    <div class="card-body">
+                        <h5 class="card-title"><img src="@group.ImageUrl" width="40" height="40" style="border-radius:40%" /></h5>
+                        <p class="card-text">@group.Description</p>
+
+                        @if (!IsLoading)
+                        {
+                            <button class="btn btn-outline-danger w-20" @onclick="()=> LeaveGroupAsync(group.Id)">Leave Group</button>
+
+                        }
+                       
+                    </div>
+                </div>
+            }
+        </div>
+
+
+
+
+    </div>
+</div>
+@code {
+    public bool IsLoading;
+
+    List<Group> UserGroups = new List<Group>();
+
+    private string? ErrorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = false;
+        var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+
+        UserGroups = (await groupService.GetGroupsAsync(userId))!;
+    }
+    private async Task LeaveGroupAsync(int groupId)
+    {
+        IsLoading = true;
+        if (ErrorMessage != null)
+        {
+            IsLoading = false;
+            return;
+        }
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await groupService.LeaveGroupAsync(groupId);
+
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Left group Successfully");
+                UserGroups.RemoveAll(g => g.Id == groupId);
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+
+
+}

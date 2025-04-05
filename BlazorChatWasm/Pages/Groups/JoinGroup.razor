@@ -1,0 +1,125 @@
+﻿@page "/groups/join"
+@using System.Security.Claims
+@attribute [Authorize]
+<PageTitle>Find Group</PageTitle>
+
+<div class="row">
+    <div class="col-lg-6">
+        <h3>Groups you may know</h3>
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                <strong>@ErrorMessage</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+            </div>
+
+        }
+        <div>
+            @if (NewGroups == null || NewGroups.Count == 0)
+            {
+                <div class="alert alert-info" role="alert">
+                    <strong>No other groups found</strong>
+                    <div class="mt-2">
+                        <a href="groups/create?ReturnUrl=groups/join" class="text-decoration-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                            </svg>
+                            <span> Create New Group?</span>
+
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success" role="alert">
+                    @if (NewGroups.Count == 1)
+                    {
+                        <strong>Found @NewGroups.Count Group</strong>
+                    }
+                    else
+                    {
+                        <strong>Found @NewGroups.Count Groups</strong>
+                    }
+                </div>
+
+                @foreach (var group in NewGroups)
+                {
+                    <div class="card my-4">
+                        <h5 class="card-header">@group.Name</h5>
+                        <div class="card-body">
+
+                            <p class="card-text"><img src="@group.ImageUrl" alt="Group" width="40" height="40" style="border-radius:50%" />@group.Description</p>
+
+                            <button class="btn btn-primary w-20" @onclick="()=> JoinGroupAsync(group.Id)">Join Group</button>
+
+
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+        <div class="btn btn-outline-light">
+            <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
+        </div>
+    </div>
+</div>
+@code {
+    public bool IsLoading;
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+    List<Group>? NewGroups = new List<Group>();
+    private string? ErrorMessage;
+    public ApplicationUser? User = new ApplicationUser();
+    public string userId = string.Empty;
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = false;
+        userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+
+        if (userId is null) return;
+
+        User = await userService.GetUserDetailsAsync(userId);
+
+        if (User is null)
+        {
+            return;
+
+        }
+        NewGroups = await groupService.GetOtherGroupsAsync();
+    }
+    private async Task JoinGroupAsync(int groupId)
+    {
+        if (NewGroups == null)
+        {
+            return;
+        }
+        if (ErrorMessage != null)
+        {
+            return;
+        }
+        IsLoading = true;
+
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await groupService.JoinGroupAsync(groupId);
+
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Group joined Successfully");
+                NewGroups.RemoveAll(g => g.Id == groupId);
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+
+
+}

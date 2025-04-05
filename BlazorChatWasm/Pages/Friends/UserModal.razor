@@ -1,0 +1,86 @@
+﻿@if (User == null)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else
+{
+
+    <div class="row d-flex justify-content-center">
+        <div class="col col-md-12 col-lg-12 col-xl-12">
+            <div class="card" style="border-radius: 15px; background-color:#484444;color:white;">
+                <div class="card-body p-4">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <img src="@User.ImageUrl"
+                                 alt="Generic placeholder image" class="img-fluid" style="width: 180px; border-radius: 10px;">
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h5 class="mb-1">@User.UserName</h5>
+                            <p class="mb-2 pb-1">@User.Email</p>
+                            <div class="d-flex justify-content-start rounded-3 p-2 mb-2 bg-body-tertiary" style="background-color:#403c3c!important;">
+                                @* <div> *@
+                                @*     <p class="small text-muted mb-1">Articles</p> *@
+                                @*     <p class="mb-0">41</p> *@
+                                @* </div> *@
+                                <div class="px-3" >
+                                    <p class="small text-muted  mb-1" style=" color:white!important">Friends</p>
+                                    <p class="mb-0" style="color:white!important">@FriendsCount</p>
+                                </div>
+
+                            </div>
+                            <div class="d-flex pt-1">
+                                <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-outline-primary me-1 flex-grow-1" @onclick="NavigateToChat">Chat</button>
+                                <button type="button" data-mdb-button-init data-mdb-ripple-init class="btn btn-primary flex-grow-1" @onclick="NavigateToFriends">Friends</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @* <button type="submit">Submit</button> *@
+    <button @onclick="Cancel" class="float-end mx-3 mt-2 modalbutton" > 
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-return-left" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M14.5 1.5a.5.5 0 0 1 .5.5v4.8a2.5 2.5 0 0 1-2.5 2.5H2.707l3.347 3.346a.5.5 0 0 1-.708.708l-4.2-4.2a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 8.3H12.5A1.5 1.5 0 0 0 14 6.8V2a.5.5 0 0 1 .5-.5" />
+        </svg>
+    </button>
+
+
+
+}
+
+@code {
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    [Parameter]
+    public string? UserId { get; set; }
+    // private async Task SubmitForm() => await BlazoredModal.CloseAsync(ModalResult.Ok(_form.Message));
+    private async Task Cancel() => await BlazoredModal.CancelAsync();
+    public ApplicationUser? User { get; set; } = default!;
+    public int FriendsCount { get; set; } = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(UserId))
+        {
+            return;
+        }
+        User = await userService.GetUserDetailsAsync(UserId);
+        if (User == null)
+        {
+            return;
+        }
+        FriendsCount = await friendService.GetFriendsCountAsync(UserId);
+
+    }
+    private void NavigateToFriends()
+    {
+        NavigationManager.NavigateTo($"/friends/{UserId}");
+    }
+    private void NavigateToChat()
+    {
+        NavigationManager.NavigateTo($"/chat/{UserId}");
+    }
+}
