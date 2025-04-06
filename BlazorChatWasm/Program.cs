@@ -21,5 +21,7 @@ builder.Services.AddTransient<ChatService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<FriendsService>();
 builder.Services.AddScoped<GroupService>();
+builder.Services.AddScoped<FriendRequestService>();
+
 
 await builder.Build().RunAsync();

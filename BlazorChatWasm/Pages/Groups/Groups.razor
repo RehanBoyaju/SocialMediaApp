@@ -1,5 +1,6 @@
 ﻿@page "/groups"
 @using System.Security.Claims
+@using BlazorChatWasm.Models.DTOs
 @attribute [Authorize]
 <div class="row">
     <div class="col-lg-6 ">
@@ -42,13 +43,13 @@
                     <div class="card-body">
                         <h5 class="card-title"><img src="@group.ImageUrl" width="40" height="40" style="border-radius:40%" /></h5>
                         <p class="card-text">@group.Description</p>
-
+                        <button class="btn btn-outline-info w-20 me-3" @onclick="()=> ShowModal(group.Id)">View Group</button>
                         @if (!IsLoading)
                         {
                             <button class="btn btn-outline-danger w-20" @onclick="()=> LeaveGroupAsync(group.Id)">Leave Group</button>
 
                         }
-                       
+
                     </div>
                 </div>
             }
@@ -65,7 +66,15 @@
     List<Group> UserGroups = new List<Group>();
 
     private string? ErrorMessage;
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
+    private void ShowModal(int groupId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("GroupId", groupId);
+        Modal.Show<GroupModal>("Group", parameters);
+
+    }
     protected override async Task OnInitializedAsync()
     {
         IsLoading = false;

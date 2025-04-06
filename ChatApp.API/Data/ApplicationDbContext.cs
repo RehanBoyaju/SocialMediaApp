@@ -12,6 +12,8 @@ namespace ChatApp.API.Data
         public DbSet<Group> Groups { get; set; }
         public DbSet<GroupMember> GroupMembers { get; set; }
         public DbSet<Relationship> Relationships { get; set; }
+        public DbSet<FriendRequest> FriendRequests { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -65,6 +67,21 @@ namespace ChatApp.API.Data
                 .HasForeignKey(k=> k.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
             
+
+            builder.Entity<FriendRequest>()
+                .HasKey(r => new { r.SenderId, r.ReceiverId });
+
+            builder.Entity<FriendRequest>()
+                .HasOne(r => r.Sender)
+                .WithMany(u => u.FriendRequestsSent)
+                .HasForeignKey(r => r.SenderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<FriendRequest>()
+                .HasOne(r => r.Receiver)
+                .WithMany(u => u.FriendRequestsReceived)
+                .HasForeignKey(r => r.ReceiverId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -37,24 +37,21 @@ namespace ChatApp.API.Controllers
                 var userId = User.Claims.Where(a => a.Type == ClaimTypes.NameIdentifier).Select(a => a.Value).FirstOrDefault();
                 if (userId is null)
                 {
-
                     return new FormResult() { Succeeded = false, Errors = ["You are not authorized"] };
-
                 }
-                var user = await _userManager.Users.Include(u => u.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(u => u.Id == userId);
+                var user = await _userManager.Users.AsNoTracking().Include(u => u.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(u => u.Id == userId);
 
                 if (user == null)
                 {
                     return new FormResult() { Succeeded = false, Errors = ["You are not authorized"] };
 
                 }
-                var friendExists = await _context.Relationships.AnyAsync(r => (r.UserId == userId && r.FriendId == newFriendId) || (r.FriendId == userId && r.UserId == newFriendId));
+                var friendExists = await _context.Relationships.AsNoTracking().AnyAsync(r => (r.UserId == userId && r.FriendId == newFriendId) || (r.FriendId == userId && r.UserId == newFriendId));
                 if (friendExists)
                 {
                     return new FormResult() { Succeeded = false, Errors = ["You are already friends with this user"] };
 
                 }
-                var updatedFriends = new List<Relationship>();
 
 
 
@@ -62,6 +59,7 @@ namespace ChatApp.API.Controllers
                 {
 
                     return new FormResult() { Succeeded = false, Errors = ["You cant add yourself as a friend"] };
+                       
                 }
 
 
@@ -70,54 +68,57 @@ namespace ChatApp.API.Controllers
                 {
                     return new FormResult() { Succeeded = false, Errors = [$" A member not found {newFriendId}"] };
 
-
                 }
+                var friendRequest = new FriendRequest() { SenderId =  userId ,ReceiverId = newFriendId,RequestDate = DateTime.Now};
+                var sendFriendRequest = await _context.FriendRequests.AddAsync(friendRequest);
+
+                Console.WriteLine($"Friend request sent from {userId} to {newFriendId}");
 
 
 
-                updatedFriends.Add(new Relationship
-                {
-                    UserId = userId,
-                    FriendId = newFriendId
-                });
-                updatedFriends.Add(new Relationship
-                {
-                    UserId = newFriendId,
-                    FriendId = userId
-                });
+                //updatedFriends.Add(new Relationship
+                //{
+                //    UserId = userId,
+                //    FriendId = newFriendId
+                //});
+                //updatedFriends.Add(new Relationship
+                //{
+                //    UserId = newFriendId,
+                //    FriendId = userId
+                //});
 
 
 
-                if (updatedFriends.Count == 0)
-                {
-                    return new FormResult() { Succeeded = false, Errors = ["No valid users to add"] };
+                //if (updatedFriends.Count == 0)
+                //{
+                //    return new FormResult() { Succeeded = false, Errors = ["No valid users to add"] };
 
-                }
-                _context.Relationships.AddRange(updatedFriends);
+                //}
+                //_context.Relationships.AddRange(updatedFriends);
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                var updatedUser = await _userManager.Users.Include(u => u.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(u => u.Id == userId);
-                if (updatedUser is null)
-                {
-                    return new FormResult() { Succeeded = false, Errors = ["Fatal error!! The user doesnt exist"] };
+                //var updatedUser = await _userManager.Users.Include(u => u.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(u => u.Id == userId);
+                //if (updatedUser is null)
+                //{
+                //    return new FormResult() { Succeeded = false, Errors = ["Fatal error!! The user doesnt exist"] };
 
-                }
-                var result = new UserWithFriendsDTO()
-                {
-                    Id = updatedUser.Id,
-                    UserName = updatedUser.UserName!,
-                    Email = updatedUser.Email!,
-                    ImageUrl = updatedUser.ImageUrl,
-                    Friends = updatedUser.Friends.Select(r => new BaseApplicationUserDTO
-                    {
-                        Id = r.FriendId,
-                        UserName = r.Friend.UserName!,
-                        Email = r.Friend.Email!,
-                        ImageUrl = r.Friend.ImageUrl
-                    }).ToList()
+                //}
+                //var result = new UserWithFriendsDTO()
+                //{
+                //    Id = updatedUser.Id,
+                //    UserName = updatedUser.UserName!,
+                //    Email = updatedUser.Email!,
+                //    ImageUrl = updatedUser.ImageUrl,
+                //    Friends = updatedUser.Friends.Select(r => new BaseApplicationUserDTO
+                //    {
+                //        Id = r.FriendId,
+                //        UserName = r.Friend.UserName!,
+                //        Email = r.Friend.Email!,
+                //        ImageUrl = r.Friend.ImageUrl
+                //    }).ToList()
 
-                };
+                //};
                 return new FormResult() { Succeeded = true, Errors = null};
 
             }

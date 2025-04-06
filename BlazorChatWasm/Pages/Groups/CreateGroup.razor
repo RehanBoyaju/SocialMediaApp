@@ -49,14 +49,27 @@
             <div class="form-floating mb-3">
                 <form @onsubmit="SearchMember">
                     <input type="search" @bind-Value="SearchFriend" @bind-Value:event="onchange" id="search" class="form-control" autocomplete="username" aria-required="true" placeholder="Search friends...">
-                    <button type="submit" class="btn btn-sm btn-outline-info mt-3">
+                    <button type="submit" class="btn btn-sm btn-outline-info mt-3 me-3">
                         Search
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                             <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0" />
                         </svg>
-                    </button>
-                </form>
 
+                    </button>
+                    @if (!Searching)
+                    {
+                        <button type="submit" @onclick=" ()=> { Searching = true; SearchResults = Friends!;}" class="btn btn-sm btn-outline-info mt-3">
+                            Show All Friends
+                        </button>
+                    }
+                    else
+                    {
+                        <button type="submit" @onclick=" ()=> { Searching = false; SearchResults = new();}" class="btn btn-sm btn-outline-info mt-3">
+                            Hide Search Results
+                        </button>
+                    }
+                </form>
+                
                 @if (Searching)
                 {
                     @if (SearchResults.Any())
@@ -106,7 +119,9 @@
                                 <img src="@User.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
                                 <span>@User.UserName</span>
                             </div>
-
+                            <button type="button" class="btn btn-info btn-sm disabled" >
+                                You
+                            </button>
                         </li>
                         @foreach(var memberId in NewGroup.MemberIds)
                         {
@@ -130,7 +145,6 @@
 
             <button type="submit" class="w-100 btn btn-lg btn-primary">Create Group</button>
             <a href="@ReturnUrl" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
-            <p>Return URL is @ReturnUrl</p>
         </EditForm>
     </div>
 </div>

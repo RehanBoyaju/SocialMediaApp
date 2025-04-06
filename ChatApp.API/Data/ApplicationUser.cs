@@ -10,6 +10,11 @@ namespace ChatApp.API.Data
     {
         public string ImageUrl { get; set; } = string.Empty;
         [JsonIgnore]
+        public virtual ICollection<FriendRequest> FriendRequestsSent { get; set; } = new HashSet<FriendRequest>();
+        [JsonIgnore]
+        public virtual ICollection<FriendRequest> FriendRequestsReceived{ get; set; } = new HashSet<FriendRequest>();
+
+        [JsonIgnore]
         public virtual ICollection<Relationship> Friends { get; set; } = new HashSet<Relationship>();
         [JsonIgnore]
         public virtual ICollection<ChatMessage>? ChatMessagesFromUsers { get; set; } = new HashSet<ChatMessage>();

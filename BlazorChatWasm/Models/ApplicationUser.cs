@@ -7,13 +7,11 @@ namespace BlazorChatWasm.Models
     public class ApplicationUser : IdentityUser
     {
         public string ImageUrl { get; set; } = string.Empty;
-        [JsonIgnore]
+        public virtual ICollection<FriendRequest> FriendRequestsSent { get; set; } = new HashSet<FriendRequest>();
+        public virtual ICollection<FriendRequest> FriendRequestsReceived { get; set; } = new HashSet<FriendRequest>();
         public virtual ICollection<ApplicationUser> Friends { get; set; }
-        [JsonIgnore]
         public virtual ICollection<ChatMessage> ChatMessagesFromUsers { get; set; }
-        [JsonIgnore]
         public virtual ICollection<ChatMessage> ChatMessagesToUsers { get; set; }
-        [JsonIgnore]
         public virtual ICollection<ApplicationUser> Groups { get; set; }
         public ApplicationUser()
         {

@@ -10,38 +10,49 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
-        <div >
-            <div >
-                <div class="px-3"><h3>Friends</h3></div>
-
-                <div>
-                    <a href="friends/add" class="btn btn-link text-decoration-none">
-                        Add Friends?
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
-                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
-                            <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
-                        </svg>
-                    </a>
+        @if(Friend == null)
+        {
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
+        }
+        else
+        {
+            <div>
+                <div>
+                    <div class="px-3"><h3>@Friend.UserName's Friends</h3></div>
 
-            @foreach (var user in UserFriends)
-            {
-                <div class="card my-2">
-                    <h5 class="card-header">@user.UserName</h5>
-                    <div class="card-body">
-                        <h5 class="card-title"><img src="@user.ImageUrl"  width="40" height="40" style="border-radius:40%"/>@user.Email</h5>
-                        @* <p class="card-text">@user.Bio</p> *@
-
-                        
-                            <button class="btn btn-outline-info w-20" @onclick="ShowModal">View Profile</button>
-
-                        
-
+                    <div>
+                        <a href="friends/add" class="btn btn-link text-decoration-none">
+                            Add Friends?
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                                <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                            </svg>
+                        </a>
                     </div>
                 </div>
-            }
-        </div>
+
+                @foreach (var user in UserFriends)
+                {
+                    <div class="card my-2">
+                        <h5 class="card-header">@user.UserName</h5>
+                        <div class="card-body">
+                            <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
+                            @* <p class="card-text">@user.Bio</p> *@
+
+
+                            <button class="btn btn-outline-info w-20" @onclick="ShowModal">View Profile</button>
+
+
+
+                        </div>
+                    </div>
+                }
+            </div>
+        }
 
 
 
@@ -52,6 +63,7 @@
    
     [Parameter] public string? friendId { get; set; }
     List<ApplicationUser> UserFriends = new List<ApplicationUser>();
+    ApplicationUser? Friend = new ApplicationUser();
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
     private string? ErrorMessage;
 
@@ -66,6 +78,7 @@
     {
     
         if (string.IsNullOrEmpty(friendId)) return;
+        Friend = await userService.GetUserDetailsAsync(friendId);
         UserFriends = await friendService.GetFriendsAsync(friendId);
     }
     private async Task UnfriendAsync(string userId)

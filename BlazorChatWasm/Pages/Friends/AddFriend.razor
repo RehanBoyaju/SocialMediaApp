@@ -34,19 +34,27 @@
 
                         <h5 class="card-title"><img src="@user.ImageUrl" alt="User" width="40" height="40" style="border-radius:50%" />@user.Email</h5>
                         @* <p class="card-text">@user.Bio</p> *@
-                        <button class="btn btn-info w-20" @onclick="()=> ShowModal(user.Id)">View Profile</button>
+                        <button class="btn btn-info w-20 me-2" @onclick="()=> ShowModal(user.Id)">View Profile</button>
 
-                        <button class="btn btn-primary w-20" @onclick="()=> AddFriendAsync(user.Id)">Add Friend</button>
+                        @if (FriendRequestsSentId.Contains(user.Id))
+                        {
+                            <button class="btn btn-secondary w-20" >Request sent</button>
 
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary w-20" @onclick="()=> AddFriendAsync(user.Id)">Add Friend</button>
+
+                        }
 
                     </div>
                 </div>
             }
 
 
-        <div class="btn btn-outline-light">
-            <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
-        </div>
+            <div class="btn btn-outline-light">
+                <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
+            </div>
         </div>
 
 
@@ -56,10 +64,15 @@
     </div>
 </div>
 @code {
+
     public bool IsLoading;
     [SupplyParameterFromQuery]  
     public string? ReturnUrl { get; set; }
     List<ApplicationUser> NonFriends = new List<ApplicationUser>();
+
+    List<Models.FriendRequest> FriendRequestsSent = new List<Models.FriendRequest>();
+    ICollection<string> FriendRequestsSentId = new HashSet<string>();
+
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
     private string? ErrorMessage;
 
@@ -74,6 +87,8 @@
     {
         IsLoading = false;
         var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+        FriendRequestsSent = await friendRequestService.GetFriendRequestsSentAsync();
+        FriendRequestsSentId = FriendRequestsSent.Select(u => u.ReceiverId).ToHashSet();
         NonFriends = await friendService.GetNonFriendsAsync(userId);
     }
     private async Task AddFriendAsync(string userId)
@@ -91,13 +106,15 @@
 
             if (result.Succeeded)
             {
-                await JS.InvokeVoidAsync("alert", $"Friend Added Successfully");
-                NonFriends.RemoveAll(u => u.Id == userId);
+                await JS.InvokeVoidAsync("alert", $"Friend request sent");
+                
             }
             else
             {
                 ErrorMessage = result.Errors![0];
             }
+            FriendRequestsSentId.Add(userId);
+        
         }
         IsLoading = false;
         StateHasChanged();
