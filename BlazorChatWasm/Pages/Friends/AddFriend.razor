@@ -2,7 +2,11 @@
 @using System.Security.Claims
 @attribute [Authorize]
 <PageTitle>Find Friends</PageTitle>
-
+@if(!string.IsNullOrEmpty(ErrorMessage)){
+<div class="alert-danger">
+    <p class="alert-danger">@ErrorMessage</p>
+</div>
+}
 <div class="row">
     <div class="col-lg-6">
         <h3>People you may know</h3>
@@ -107,13 +111,13 @@
             if (result.Succeeded)
             {
                 await JS.InvokeVoidAsync("alert", $"Friend request sent");
-                
+                FriendRequestsSentId.Add(userId);
+
             }
             else
             {
                 ErrorMessage = result.Errors![0];
             }
-            FriendRequestsSentId.Add(userId);
         
         }
         IsLoading = false;

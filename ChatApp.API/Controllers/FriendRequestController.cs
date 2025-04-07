@@ -45,6 +45,12 @@ namespace ChatApp.API.Controllers
             try
             {
                 var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+                var friendExists = await Context.Relationships.AsNoTracking().AnyAsync(r => (r.UserId == userId && r.FriendId == friendId) || (r.FriendId == userId && r.UserId == friendId));
+                if (friendExists)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["You are already friends with this user"] };
+
+                }
                 var acceptReq = await Context.FriendRequests.FirstOrDefaultAsync(f => f.SenderId == friendId && f.ReceiverId == userId && f.IsAccepted == null);
                 if (acceptReq is null)
                 {
@@ -59,6 +65,8 @@ namespace ChatApp.API.Controllers
                     return new FormResult() { Succeeded = false, Errors = ["Fatal error!! The user doesnt exist"] };
 
                 }
+
+                
                 var updatedFriends = new List<Relationship>();
                 updatedFriends.Add(new Relationship
                 {
@@ -82,7 +90,7 @@ namespace ChatApp.API.Controllers
                 await Context.SaveChangesAsync();
                 await transaction.CommitAsync();
                 Console.WriteLine($"Friends added {userId} and {friendId}");
-
+                
             }
             catch (Exception ex)
             {
@@ -99,6 +107,11 @@ namespace ChatApp.API.Controllers
             try
             {
                 var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+                var reqExists = await Context.FriendRequests.AsNoTracking().AnyAsync(f => (f.SenderId == friendId && f.ReceiverId == userId) || (f.ReceiverId == friendId && f.SenderId == userId));
+                if (reqExists)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Request already exists"] };
+                }
                 var rejectReq = await Context.FriendRequests.FirstOrDefaultAsync(f => f.SenderId == friendId && f.ReceiverId == userId && f.IsAccepted == null);
                 if (rejectReq is null)
                 {

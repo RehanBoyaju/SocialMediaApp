@@ -69,7 +69,12 @@ namespace ChatApp.API.Controllers
                     return new FormResult() { Succeeded = false, Errors = [$" A member not found {newFriendId}"] };
 
                 }
-                var friendRequest = new FriendRequest() { SenderId =  userId ,ReceiverId = newFriendId,RequestDate = DateTime.Now};
+                if(_context.FriendRequests.Any(u => (u.SenderId == userId && u.ReceiverId == newFriendId) || ((u.ReceiverId == userId && u.SenderId == newFriendId))))
+                {
+                    throw new Exception("Friend Request already exists");
+                }
+                var friendRequest = new FriendRequest() { SenderId = userId, ReceiverId = newFriendId, RequestDate = DateTime.Now };
+
                 var sendFriendRequest = await _context.FriendRequests.AddAsync(friendRequest);
 
                 Console.WriteLine($"Friend request sent from {userId} to {newFriendId}");
@@ -125,7 +130,7 @@ namespace ChatApp.API.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                return new FormResult() { Succeeded = true, Errors = [ex.Message] };
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
 
             }
         }

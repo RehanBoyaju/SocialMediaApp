@@ -129,7 +129,6 @@
         IsLoading = false;
         var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
 
-        FriendRequests = await friendRequestService.GetFriendRequestsAsync();
     }
 
 
