@@ -71,10 +71,20 @@ namespace BlazorChatWasm.Services
                 throw new Exception("Group not found");
             }
             var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name, ImageUrl = data.ImageUrl };
-            foreach (var item in data.MembersInfo)
+            foreach(var item in data.Admins)
+            {
+                group.AdminIds.Add(item.Id);
+                group.Admins.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl ,IsAdmin = true,IsModerator = false, DateAdded = item.AddedDate});
+            }
+            foreach (var item in data.Moderators)
+            {
+                group.ModeratorIds.Add(item.Id);
+                group.Moderators.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl, IsAdmin = true, IsModerator = true, DateAdded = item.AddedDate });
+            }
+                foreach (var item in data.MembersInfo)
             {
                 group.MemberIds.Add(item.Id);
-                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl });
+                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl, IsAdmin = false, IsModerator = false, DateAdded = item.AddedDate });
             }
             return group;
         }

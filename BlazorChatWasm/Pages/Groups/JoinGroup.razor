@@ -51,7 +51,7 @@
                         <div class="card-body">
 
                             <p class="card-text"><img src="@group.ImageUrl" alt="Group" width="40" height="40" style="border-radius:50%" />@group.Description</p>
-
+                            <button class="btn btn-outline-info w-20 me-3" @onclick="()=> ShowModal(group.Id)">View Group</button>
                             <button class="btn btn-primary w-20" @onclick="()=> JoinGroupAsync(group.Id)">Join Group</button>
 
 
@@ -61,7 +61,15 @@
             }
         </div>
         <div class="btn btn-outline-light">
-            <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
+            @if (!string.IsNullOrEmpty(ReturnUrl))
+            {
+                <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
+
+            }
+            else
+            {
+                <a href="groups" class="text-danger text-decoration-none">Cancel</a>
+            }
         </div>
     </div>
 </div>
@@ -73,6 +81,15 @@
     private string? ErrorMessage;
     public ApplicationUser? User = new ApplicationUser();
     public string userId = string.Empty;
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+    private void ShowModal(int groupId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("GroupId", groupId);
+        Modal.Show<GroupModal>("Group", parameters);
+
+    }
     protected override async Task OnInitializedAsync()
     {
         IsLoading = false;

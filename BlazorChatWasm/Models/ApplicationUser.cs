@@ -9,10 +9,14 @@ namespace BlazorChatWasm.Models
         public string ImageUrl { get; set; } = string.Empty;
         public virtual ICollection<FriendRequest> FriendRequestsSent { get; set; } = new HashSet<FriendRequest>();
         public virtual ICollection<FriendRequest> FriendRequestsReceived { get; set; } = new HashSet<FriendRequest>();
+        public virtual ICollection<GroupRequest> GroupRequestsSent { get; set; } = new HashSet<GroupRequest>();
         public virtual ICollection<ApplicationUser> Friends { get; set; }
         public virtual ICollection<ChatMessage> ChatMessagesFromUsers { get; set; }
         public virtual ICollection<ChatMessage> ChatMessagesToUsers { get; set; }
         public virtual ICollection<ApplicationUser> Groups { get; set; }
+        public bool IsAdmin { get; set; }
+        public bool IsModerator { get; set; }
+        public DateTime DateAdded { get; set; }
         public ApplicationUser()
         {
             Id = string.Empty;

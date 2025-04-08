@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ChatApp.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250401191534_RemovedByteArray")]
-    partial class RemovedByteArray
+    [Migration("20250407164445_UpdatingCascadeActionInChat")]
+    partial class UpdatingCascadeActionInChat
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -44,6 +44,10 @@ namespace ChatApp.API.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("bit");
 
@@ -66,10 +70,6 @@ namespace ChatApp.API.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("bit");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
@@ -128,6 +128,27 @@ namespace ChatApp.API.Migrations
                     b.ToTable("ChatMessages");
                 });
 
+            modelBuilder.Entity("ChatApp.API.Data.FriendRequest", b =>
+                {
+                    b.Property<string>("SenderId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ReceiverId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool?>("IsAccepted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("SenderId", "ReceiverId");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.ToTable("FriendRequests");
+                });
+
             modelBuilder.Entity("ChatApp.API.Data.Group", b =>
                 {
                     b.Property<int>("Id")
@@ -142,10 +163,6 @@ namespace ChatApp.API.Migrations
                         .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("ImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.PrimitiveCollection<string>("MemberIds")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -165,6 +182,15 @@ namespace ChatApp.API.Migrations
 
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("AddedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsModerator")
+                        .HasColumnType("bit");
 
                     b.HasKey("GroupId", "UserId");
 
@@ -336,23 +362,42 @@ namespace ChatApp.API.Migrations
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "FromUser")
                         .WithMany("ChatMessagesFromUsers")
                         .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ChatApp.API.Data.Group", "ToGroup")
                         .WithMany("ChatMessages")
                         .HasForeignKey("ToGroupId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "ToUser")
                         .WithMany("ChatMessagesToUsers")
                         .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("FromUser");
 
                     b.Navigation("ToGroup");
 
                     b.Navigation("ToUser");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.FriendRequest", b =>
+                {
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "Receiver")
+                        .WithMany("FriendRequestsReceived")
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "Sender")
+                        .WithMany("FriendRequestsSent")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("ChatApp.API.Data.GroupMember", b =>
@@ -449,6 +494,10 @@ namespace ChatApp.API.Migrations
                     b.Navigation("ChatMessagesFromUsers");
 
                     b.Navigation("ChatMessagesToUsers");
+
+                    b.Navigation("FriendRequestsReceived");
+
+                    b.Navigation("FriendRequestsSent");
 
                     b.Navigation("Friends");
 

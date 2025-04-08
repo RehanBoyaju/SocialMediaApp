@@ -17,5 +17,10 @@ namespace BlazorChatWasm.Models.DTOs
         [MinLength(3)]
         public List<string> MemberIds { get; set; } = [];
 
+        [Required]
+        [MinLength(1)]
+        public virtual List<string> AdminIds { get; set; } = [];
+
+        public virtual List<string> ModeratorIds { get; set; } = [];
     }
 }

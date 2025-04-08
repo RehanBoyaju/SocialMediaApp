@@ -180,11 +180,41 @@ namespace ChatApp.API.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<DateTime>("AddedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsModerator")
+                        .HasColumnType("bit");
+
                     b.HasKey("GroupId", "UserId");
 
                     b.HasIndex("UserId");
 
                     b.ToTable("GroupMembers");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.GroupRequest", b =>
+                {
+                    b.Property<string>("SenderId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("GroupId")
+                        .HasColumnType("int");
+
+                    b.Property<bool?>("IsAccepted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("SenderId", "GroupId");
+
+                    b.HasIndex("GroupId");
+
+                    b.ToTable("GroupRequest");
                 });
 
             modelBuilder.Entity("ChatApp.API.Data.Relationship", b =>
@@ -350,17 +380,17 @@ namespace ChatApp.API.Migrations
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "FromUser")
                         .WithMany("ChatMessagesFromUsers")
                         .HasForeignKey("FromUserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("ChatApp.API.Data.Group", "ToGroup")
                         .WithMany("ChatMessages")
                         .HasForeignKey("ToGroupId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("ChatApp.API.Data.ApplicationUser", "ToUser")
                         .WithMany("ChatMessagesToUsers")
                         .HasForeignKey("ToUserId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.Navigation("FromUser");
 
@@ -405,6 +435,25 @@ namespace ChatApp.API.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("ChatApp.API.Data.GroupRequest", b =>
+                {
+                    b.HasOne("ChatApp.API.Data.Group", "Group")
+                        .WithMany("GroupRequestsReceived")
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("ChatApp.API.Data.ApplicationUser", "Sender")
+                        .WithMany("GroupRequestsSent")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Group");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("ChatApp.API.Data.Relationship", b =>
@@ -489,12 +538,16 @@ namespace ChatApp.API.Migrations
 
                     b.Navigation("Friends");
 
+                    b.Navigation("GroupRequestsSent");
+
                     b.Navigation("Groups");
                 });
 
             modelBuilder.Entity("ChatApp.API.Data.Group", b =>
                 {
                     b.Navigation("ChatMessages");
+
+                    b.Navigation("GroupRequestsReceived");
 
                     b.Navigation("Members");
                 });

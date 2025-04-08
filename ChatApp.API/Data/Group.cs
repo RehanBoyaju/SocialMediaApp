@@ -19,17 +19,27 @@ namespace ChatApp.API.Data
         public string? ImageUrl { get; set; }
 
         [JsonIgnore]
-        public virtual ICollection<GroupMember>? Members { get; set; } = new HashSet<GroupMember>();
+        public virtual ICollection<GroupMember> Members { get; set; } = new HashSet<GroupMember>();
         [JsonIgnore]
         public int MembersCount => Members!.Count;
 
         [NotMapped]
-        [JsonIgnore]
         public virtual List<string> MemberIds { get; set; } = []; 
+        [NotMapped]
+        public virtual HashSet<string> AdminIds { get; set; } = [];
+        [NotMapped]
+        public virtual List<string> ModeratorIds { get; set; } = [];
+        [JsonIgnore]
+        public virtual ICollection<GroupRequest> GroupRequestsReceived { get; set; } = new HashSet<GroupRequest>();
 
         [JsonIgnore]
         public virtual ICollection<ChatMessage>? ChatMessages { get; set; } = new HashSet<ChatMessage>();
 
-       
+        [NotMapped]
+        public IEnumerable<GroupMember>? Admins  =>   Members?.Where(m => m.IsAdmin) ?? [];
+
+        [NotMapped]
+        public IEnumerable<GroupMember>? Moderators => Members?.Where(m => m.IsModerator) ?? [];
+
     }
 }

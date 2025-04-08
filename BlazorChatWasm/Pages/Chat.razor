@@ -1,5 +1,4 @@
-﻿
-@page "/chat"
+﻿@page "/chat"
 @page "/chat/{ContactId}"
 @page "/chat/group/{GroupId:int?}"
 @using BlazorChatWasm.Pages.Groups
@@ -10,6 +9,7 @@
         <h3>You are not authorized!<a href="Account/Login">Redirect To Login</a></h3>
     </NotAuthorized>
 </AuthorizeView>
+
 @if ((string.IsNullOrEmpty(ContactId)) && (GroupId == null || GroupId == 0))
 {
     if (Loaded && ChatUsers != null && ChatUsers.Count == 0)
@@ -320,6 +320,7 @@ else
         </div>
     </div>
 }
+
 @code
 {
     [CascadingParameter] public HubConnection? hubConnection { get; set; }
@@ -344,6 +345,8 @@ else
 
     [CascadingParameter] IModalService Modal { get; set; } = default!;
 
+    //TODO: Add a loading spinner when loads up to not show the default picture
+    //TODO: Administrator can see all the message
     private void EditItem()
     {
         if (ToggleGroupChat && CurrentGroup != null)
@@ -390,7 +393,7 @@ else
                     //FromUser = CurrentUser,
                         FromUserId = CurrentUser.Id!,
                         Message = message,
-                        ToUserId = Contact.Id,
+                        ToUserId = Contact!.Id,
                         CreatedDate = DateTime.Now
                     };
                 await chatService.SaveMessageAsync(chatHistory);
@@ -572,7 +575,7 @@ else
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
 
-        //await JS.InvokeAsync<string>("ScrollToBottom", "chatContainer");
+        await JS.InvokeAsync<string>("ScrollToBottom", "chatContainer");
 
 
     }

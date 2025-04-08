@@ -56,7 +56,7 @@ namespace ChatApp.API.Controllers
         public async Task<IActionResult> GetAllGroupsAsync()
         {
             var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
-            var groups = await Context.Groups.AsNoTracking().ToListAsync();
+            var groups = await Context.Groups.AsNoTracking().Include(g=> g.Members).ToListAsync();
             return Ok(groups);
         }
         [HttpGet("other")]
@@ -104,46 +104,77 @@ namespace ChatApp.API.Controllers
         public async Task<IActionResult> GetGroupByIdAsync(int groupId)
         {
 
-            var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
-            bool isMember = await Context.GroupMembers
-                                                             .AsNoTracking()
-                                                             .AnyAsync(g => g.UserId == userId && g.GroupId == groupId);
-
-            if (!isMember)
+            try
             {
-                return BadRequest("Not found");
-            }
+                var userId = User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+                bool isMember = await Context.GroupMembers
+                                                                 .AsNoTracking()
+                                                                 .AnyAsync(g => g.UserId == userId && g.GroupId == groupId);
 
-            // Fetch group details
-            //var group = await Context.Groups
-            //    .AsNoTracking()
-            //    .FirstOrDefaultAsync(g => g.Id == groupId);
-
-            //group.Members = await Context.GroupMembers.Include(g => g.User).Where(g => g.GroupId == groupId).ToListAsync();
-
-            var group = await Context.Groups
-                                                    .AsNoTracking()
-                                                    .Include(g => g.Members)!
-                                                        .ThenInclude(m => m.User)
-                                                    .FirstOrDefaultAsync(g => g.Id == groupId);
-
-            var groupDto = new BaseGroupDTO
-            {
-                Id = group.Id,
-                Name = group.Name,
-                Description = group.Description,
-                ImageUrl = group.ImageUrl,
-                // Map members data
-                MembersInfo = group.Members.Select(m => new BaseApplicationUserDTO
+                if (!isMember)
                 {
-                    Id = m.User.Id,
-                    UserName = m.User.UserName,
-                    Email = m.User.Email,
-                    ImageUrl = m.User.ImageUrl
-                }).ToList(),
-                MembersCount = group.Members.Count
-            };
+                    //return new FormResult { Succeeded = false,Errors=  ["Not found"]};
+                    return NoContent();
+                }
+
+                // Fetch group details
+                //var group = await Context.Groups
+                //    .AsNoTracking()
+                //    .FirstOrDefaultAsync(g => g.Id == groupId);
+
+                //group.Members = await Context.GroupMembers.Include(g => g.User).Where(g => g.GroupId == groupId).ToListAsync();
+
+                var group = await Context.Groups
+                                                        .AsNoTracking()
+                                                        .Include(g => g.Members)!
+                                                            .ThenInclude(m => m.User)
+                                                        .FirstOrDefaultAsync(g => g.Id == groupId);
+
+                var groupDto = new BaseGroupDTO
+                {
+                    Id = group.Id,
+                    Name = group.Name,
+                    Description = group.Description,
+                    ImageUrl = group.ImageUrl,
+                    Admins = group.Admins.Select(m => new BaseApplicationUserDTO
+                    {
+                        Id = m.User.Id,
+                        UserName = m.User.UserName,
+                        Email = m.User.Email,
+                        ImageUrl = m.User.ImageUrl,
+                        IsAdmin = true,
+                        IsModerator = false,
+                        AddedDate = m.AddedDate
+                    }),
+                    Moderators = group.Moderators.Select(m => new BaseApplicationUserDTO
+                    {
+                        Id = m.User.Id,
+                        UserName = m.User.UserName,
+                        Email = m.User.Email,
+                        ImageUrl = m.User.ImageUrl,
+                        IsAdmin = false,
+                        IsModerator = true,
+                        AddedDate = m.AddedDate
+                    }),
+                    MembersInfo = group.Members.Select(m => new BaseApplicationUserDTO
+                    {
+                        Id = m.User.Id,
+                        UserName = m.User.UserName,
+                        Email = m.User.Email,
+                        ImageUrl = m.User.ImageUrl,
+                        IsAdmin = false,
+                        IsModerator = false,
+                        AddedDate = m.AddedDate
+                    }).ToList(),
+                    MembersCount = group.Members.Count
+                };
             return Ok(groupDto);
+
+            }
+            catch(Exception ex)
+            {
+                throw new Exception (ex.Message);
+            }
         }
 
         [HttpPost]
@@ -164,21 +195,30 @@ namespace ChatApp.API.Controllers
                 // Find members
                 var invalidMembers = new List<string>();
                 var groupMembers = new List<GroupMember>();
-                var groupMemberIds = new List<string>();
+                var groupAdmins = new List<GroupMember>();
+                
                 foreach (var memberId in createGroup.MemberIds)
                 {
                     var member = await UserManager.FindByIdAsync(memberId);
                     if (member is not null)
                     {
-                        groupMemberIds.Add(memberId);
-                        groupMembers.Add(new GroupMember { GroupId = createGroup.Id, UserId = memberId });
+                        if (!createGroup.AdminIds.Contains(memberId))
+                        {
+                            groupMembers.Add(new GroupMember { GroupId = createGroup.Id, UserId = memberId, AddedDate = DateTime.Now });
+                        }
+                        else
+                        {
+                            groupMembers.Add(new GroupMember { GroupId = createGroup.Id, UserId = memberId, AddedDate = DateTime.Now ,IsAdmin = true});
+
+                        }
+
                     }
                     else
                     {
                         invalidMembers.Add(memberId);
                     }
                 }
-
+                
                 // If there are invalid members, return error but still create valid ones
                 if (invalidMembers.Count != 0)
                 {

@@ -69,7 +69,7 @@
                         </button>
                     }
                 </form>
-                
+
                 @if (Searching)
                 {
                     @if (SearchResults.Any())
@@ -168,10 +168,13 @@
         {
             var userId = (await customAuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(_=>_.Type== ClaimTypes.NameIdentifier)!.Value;
             User = await userService.GetUserDetailsAsync(userId);
+            if (User == null) return;
             Friends = await friendService.GetFriendsAsync(userId);
             SearchResults = Friends?.ToList() ?? new List<ApplicationUser>();
+            NewGroup.MemberIds.Add(userId);
+            NewGroup.AdminIds.Add(userId);
         }
-      
+
     }
 
     private void AddMember(string userId)
@@ -209,14 +212,23 @@
 
     private async Task CreateGroupAsync()
     {
+
         if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
         {
-            NewGroup.MemberIds.Add(User.Id);
+            foreach (var member in NewGroup.MemberIds)
+            {
+                Console.WriteLine(member);
+
+            }
+            
+
+
             var result = await groupService.AddGroup(new Group()
             {
                 Name = NewGroup.Name,
                 Description = NewGroup.Description,
                 MemberIds = NewGroup.MemberIds,
+                AdminIds = NewGroup.AdminIds,
                 ImageUrl = ImagePreviewUrl
             });
 

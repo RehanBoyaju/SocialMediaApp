@@ -13,6 +13,8 @@ namespace ChatApp.API.Data
         public DbSet<GroupMember> GroupMembers { get; set; }
         public DbSet<Relationship> Relationships { get; set; }
         public DbSet<FriendRequest> FriendRequests { get; set; }
+        public DbSet<GroupRequest> GroupRequests { get; set; }
+
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -25,19 +27,19 @@ namespace ChatApp.API.Data
                 entity.HasOne(d => d.FromUser)
                     .WithMany(p => p.ChatMessagesFromUsers)
                     .HasForeignKey(d => d.FromUserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                    .OnDelete(DeleteBehavior.NoAction);
 
                 entity.HasOne(d => d.ToUser)
                     .WithMany(p => p.ChatMessagesToUsers)
                     .HasForeignKey(d => d.ToUserId)
-                    .OnDelete(DeleteBehavior.NoAction);
+                    .OnDelete(DeleteBehavior.Cascade);
 
 
 
                 entity.HasOne(d => d.ToGroup)
                     .WithMany(g => g.ChatMessages)
                     .HasForeignKey(c => c.ToGroupId).
-                    OnDelete(DeleteBehavior.NoAction);
+                    OnDelete(DeleteBehavior.Cascade);
 
             });
 
@@ -56,6 +58,7 @@ namespace ChatApp.API.Data
                 .WithMany(u => u.Groups)
                 .HasForeignKey(gm => gm.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+
 
 
             builder.Entity<Relationship>().
@@ -82,6 +85,25 @@ namespace ChatApp.API.Data
                 .WithMany(u => u.FriendRequestsReceived)
                 .HasForeignKey(r => r.ReceiverId)
                 .OnDelete(DeleteBehavior.NoAction);
+
+
+            builder.Entity<GroupRequest>()
+                .HasKey(r => new { r.SenderId, r.GroupId });
+
+            builder.Entity<GroupRequest>()
+                .HasOne(r => r.Sender)
+                .WithMany(u => u.GroupRequestsSent)
+                .HasForeignKey(r => r.SenderId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<GroupRequest>()
+                .HasOne(r => r.Group)
+                .WithMany(u => u.GroupRequestsReceived)
+                .HasForeignKey(r => r.GroupId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+
+
         }
     }
 }

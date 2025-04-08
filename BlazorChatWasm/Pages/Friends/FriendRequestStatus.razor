@@ -1,0 +1,136 @@
+﻿@page "/friends/requests/status"
+@if (Loading)
+{
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+}
+else if(FriendRequestsSent.Count == 0)
+{
+    <div class="alert alert-info" role="alert">
+        <strong>No friend requests pending</strong>
+        <div class="mt-2">
+            <a href="friends/add?ReturnUrl=friends" class="text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-lg" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2" />
+                </svg>
+                <span> Add New Friends?</span>
+
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-lg-6 ">
+            <div>
+                <div class="px-3"><h3>Friend Requests Sent</h3></div>
+            </div>
+            <div>
+                @foreach (var request in FriendRequestsSent)
+                {
+                    if (request == null)
+                    {
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card my-2">
+                            <h5 class="card-header">@request.Sender.UserName</h5>
+                            <div class="card-body">
+                                <h5 class="card-title"><img src="@request.Sender.ImageUrl" width="40" height="40" style="border-radius:40%" />@request.Sender.Email</h5>
+                                @* <p class="card-text">@user.Bio</p> *@
+                                <button class="btn btn-outline-info w-25 me-2" @onclick="()=>ShowModal(request.ReceiverId)">View Profile</button>
+                                @if (!IsLoading)
+                                {
+                                    <button class="btn btn-outline-warning w-25 me-3" @onclick="()=> CancelRequestAsync(request.Receiver)">Cancel</button>
+
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-success w-25 me-3">
+                                        <div class="spinner-grow spinner-grow-sm" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+
+                                }
+
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="btn btn-outline-light">
+                <a href="@ReturnUrl" class="text-danger text-decoration-none">Cancel</a>
+            </div>
+        </div>
+    </div>
+
+}
+@code{
+    public bool Loading = true;
+    public bool IsLoading = false;
+    List<ApplicationUser> UserFriends = new List<ApplicationUser>();
+    [CascadingParameter] public IModalService Modal { get; set; } = default!;
+    private string? ErrorMessage;
+    List<FriendRequest> FriendRequestsSent = new List<FriendRequest>();
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl { get; set; }
+    private void ShowModal(string friendId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("UserId", friendId);
+        Modal.Show<UserModal>("Profile", parameters);
+
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        Loading = true;
+        IsLoading = false;
+        var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+
+        FriendRequestsSent = await friendRequestService.GetFriendRequestsSentAsync();
+    }
+    protected override void OnAfterRender(bool firstRender)
+    {
+        Loading = false;
+        base.OnAfterRender(firstRender);    
+    }
+    private async Task CancelRequestAsync(ApplicationUser receiver)
+    {
+        IsLoading = true;
+
+        if (ErrorMessage != null)
+        {
+            IsLoading = false;
+            return;
+        }
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await friendRequestService.CancelRequestAsync(receiver.Id);
+
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Canceled request Successfully");
+                FriendRequestsSent.RemoveAll(u => u.ReceiverId == receiver.Id);
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        
+        IsLoading = false;
+        StateHasChanged();
+    }
+}

@@ -69,61 +69,18 @@ namespace ChatApp.API.Controllers
                     return new FormResult() { Succeeded = false, Errors = [$" A member not found {newFriendId}"] };
 
                 }
-                if(_context.FriendRequests.Any(u => (u.SenderId == userId && u.ReceiverId == newFriendId) || ((u.ReceiverId == userId && u.SenderId == newFriendId))))
+                if(_context.FriendRequests.Any(u => (u.SenderId == userId && u.ReceiverId == newFriendId) ))
                 {
                     throw new Exception("Friend Request already exists");
                 }
                 var friendRequest = new FriendRequest() { SenderId = userId, ReceiverId = newFriendId, RequestDate = DateTime.Now };
-
-                var sendFriendRequest = await _context.FriendRequests.AddAsync(friendRequest);
+                await _context.FriendRequests.AddAsync(friendRequest);
 
                 Console.WriteLine($"Friend request sent from {userId} to {newFriendId}");
 
-
-
-                //updatedFriends.Add(new Relationship
-                //{
-                //    UserId = userId,
-                //    FriendId = newFriendId
-                //});
-                //updatedFriends.Add(new Relationship
-                //{
-                //    UserId = newFriendId,
-                //    FriendId = userId
-                //});
-
-
-
-                //if (updatedFriends.Count == 0)
-                //{
-                //    return new FormResult() { Succeeded = false, Errors = ["No valid users to add"] };
-
-                //}
-                //_context.Relationships.AddRange(updatedFriends);
-
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                //var updatedUser = await _userManager.Users.Include(u => u.Friends).ThenInclude(f => f.Friend).FirstOrDefaultAsync(u => u.Id == userId);
-                //if (updatedUser is null)
-                //{
-                //    return new FormResult() { Succeeded = false, Errors = ["Fatal error!! The user doesnt exist"] };
-
-                //}
-                //var result = new UserWithFriendsDTO()
-                //{
-                //    Id = updatedUser.Id,
-                //    UserName = updatedUser.UserName!,
-                //    Email = updatedUser.Email!,
-                //    ImageUrl = updatedUser.ImageUrl,
-                //    Friends = updatedUser.Friends.Select(r => new BaseApplicationUserDTO
-                //    {
-                //        Id = r.FriendId,
-                //        UserName = r.Friend.UserName!,
-                //        Email = r.Friend.Email!,
-                //        ImageUrl = r.Friend.ImageUrl
-                //    }).ToList()
-
-                //};
+                
                 return new FormResult() { Succeeded = true, Errors = null};
 
             }

@@ -147,7 +147,15 @@
             }
 
             <button type="submit" class="w-100 btn btn-lg btn-primary">Update Group</button>
-            <a href="@ReturnUrl" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
+            @if (!string.IsNullOrEmpty(ReturnUrl))
+            {
+                <a href="@ReturnUrl" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
+
+            }
+            else
+            {
+                <a href="groups" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
+            }
             <input type="hidden" @bind="ReturnUrl" />
         </EditForm>
     </div>
@@ -167,6 +175,11 @@
     private string SearchFriend { get; set; } = string.Empty;
     private bool Searching = false;
     public ApplicationUser User { get; set; } = new();
+
+    //TODO: Only admin can change group name,image and description  and delete group but moderators can add and remove members
+    //TODO: Only admin can add and remove moderators
+    //TODO: Only admin can add and remove admins
+    //TODO: Also add a group invite by any member or group joining request
     protected override async Task OnInitializedAsync()
     {
         Searching = false;
@@ -187,8 +200,8 @@
             var group = await groupService.GetGroupByIdAsync(GroupId.Value);
             if (group != null)
             {
-                UpdateGroup.Name = group.Name;
-                UpdateGroup.Description = group.Description;
+                UpdateGroup.Name = group.Name!;
+                UpdateGroup.Description = group.Description!;
                 UpdateGroup.MemberIds = group.MemberIds;
                 ImagePreviewUrl = group.ImageUrl;
             }
