@@ -23,6 +23,11 @@
 @using Microsoft.AspNetCore.SignalR
 @using System.Security.Claims
 @using BlazorChatWasm.Pages.Auth
+@using BlazorChatWasm.Models.User;
+@using BlazorChatWasm.Models.Groups;
+@using BlazorChatWasm.Pages.Groups
+@using BlazorChatWasm.Pages.Chats
+
 
 @inject IJSRuntime JS
 
@@ -34,5 +39,7 @@
 @inject UserService userService
 @inject FriendsService friendService
 @inject FriendRequestService friendRequestService
+@inject GroupRequestService groupRequestService
+
 
 

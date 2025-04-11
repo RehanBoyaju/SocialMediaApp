@@ -1,57 +1,22 @@
-﻿@page "/groups/edit/{GroupId:int?}"
-
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
+﻿<PageTitle>Add Group Member</PageTitle>
+@page "/groups/{groupId:int?}/add"
 @using BlazorChatWasm.Models.DTOs
-@using BlazorChatWasm.Models.Groups
-@using BlazorChatWasm.Models.User
 @attribute [Authorize]
-<PageTitle>Edit Group</PageTitle>
-
-<div class="row d-flex mb-5" >
-    <div class="col-lg-10 d-flex justify-content-center">
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <div class="alert alert-danger" role="alert">
-                <strong>@ErrorMessage</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        }
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        <strong>@ErrorMessage</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+<div class="row d-flex mb-5 ">
+    <div class="col-12 d-flex justify-content-center ">
         <EditForm Model="UpdateGroup" asp-route-returnUrl="@ReturnUrl" method="post" OnValidSubmit="UpdateGroupAsync" FormName="UpdateGroup">
-            <DataAnnotationsValidator />
-            <h2>Update group.</h2>
-            <hr />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="UpdateGroup.Name" id="UpdateGroup.Name" class="form-control" autocomplete="username" aria-required="true" placeholder="Group Name" />
-                <label for="UpdateGroup.Name">Name</label>
-                <ValidationMessage For="() => UpdateGroup.Name" class="text-danger" />
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="UpdateGroup.Description" id="UpdateGroup.Description" class="form-control" autocomplete="username" aria-required="true" placeholder="Group Description" />
-                <label for="UpdateGroup.Description">Description</label>
-                <ValidationMessage For="() => UpdateGroup.Description" class="text-danger" />
-            </div>
-
-            <div class="form-floating mb-3">
-                <InputFile OnChange="HandleFileChange" id="input.Profile" type="file" class="form-control" accept=".jpg, .jpeg, .png"></InputFile>
-                <label for="UpdateGroup.Profile">Upload your photo</label>
-                <ValidationMessage For="() => UpdateGroup.ImageUrl" class="text-danger"></ValidationMessage>
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <div class="text-danger">@ErrorMessage</div>
-                }
-            </div>
-            @if (!string.IsNullOrEmpty(ImagePreviewUrl))
-            {
-                <div>
-                    <img src="@ImagePreviewUrl" alt="Profile Preview" class="img-thumbnail" />
-                </div>
-            }
+            <h3>Add Group Member</h3>
 
             <div class="form-floating my-3">
                 <form @onsubmit="SearchMember">
-                    <label for="search">Add Friends </label>
+                    <label for="search">Search friends </label>
                     <input type="search" @bind-Value="SearchFriend" @bind-Value:event="onchange" id="search" class="form-control" autocomplete="username" aria-required="true" placeholder="Search friends...">
                     <button type="submit" class="btn btn-sm btn-outline-info mt-3 me-3">
                         Search
@@ -62,7 +27,7 @@
                     @if (!Searching)
                     {
                         <button type="submit" @onclick=" ()=> { Searching = true; SearchResults = Friends!;}" class="btn btn-sm btn-outline-info mt-3">
-                            Show All Friends
+                            Show other friends
                         </button>
                     }
                     else
@@ -77,7 +42,7 @@
 
                 @if (Searching)
                 {
-                    @if (SearchResults.Any())
+                    @if (SearchResults!= null && SearchResults.Any())
                     {
                         <div class="mt-3">
                             <h5>Search Results</h5>
@@ -91,7 +56,7 @@
                                         </div>
                                         @if (UpdateGroup.MemberIds.Contains(user.Id))
                                         {
-                                            <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(user.Id))">
+                                            <button type="button" class="btn btn-danger btn-sm " @onclick="@(() => RemoveMember(user.Id))">
                                                 Remove
                                             </button>
                                         }
@@ -119,15 +84,6 @@
                 <div class="mb-3">
                     <h5>Selected Members (@UpdateGroup.MemberIds.Count)</h5>
                     <ul class="list-group">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div class="d-flex align-items-center">
-                                <img src="@User.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
-                                <span>@User.UserName</span>
-                            </div>
-                            <button type="button" class="btn btn-outline-info btn-sm disabled" style="width:15%">
-                                You
-                            </button>
-                        </li>
                         @foreach (var memberId in UpdateGroup.MemberIds)
                         {
                             var member = Friends?.FirstOrDefault(f => f.Id == memberId);
@@ -138,7 +94,7 @@
                                         <img src="@member.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
                                         <span>@member.UserName</span>
                                     </div>
-                                    <button type="button" class="btn btn-danger btn-sm" style="width:15%" @onclick="@(() => RemoveMember(member.Id))">
+                                    <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(member.Id))">
                                         Remove
                                     </button>
                                 </li>
@@ -158,59 +114,57 @@
             {
                 <a href="groups" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
             }
-            <input type="hidden" @bind="ReturnUrl" />
         </EditForm>
     </div>
 </div>
 
 @code {
-    GroupModel UpdateGroup = new GroupModel { MemberIds = new List<string>() }; 
     [Parameter]
-    public int? GroupId { get; set; } = null;
-    public Group CurrentGroup = new();
-    [SupplyParameterFromQuery]
-    public string? ReturnUrl { get; set; } = "/";
-    private string? ImagePreviewUrl;
+    public int? groupId { get; set; }
     private string? ErrorMessage;
+    public Group CurrentGroup = new();
     private List<ApplicationUser>? Friends { get; set; } = null;
     private List<ApplicationUser> SearchResults { get; set; } = new();
     private string SearchFriend { get; set; } = string.Empty;
     private bool Searching = false;
-    public ApplicationUser User { get; set; } = new();
+    public ApplicationUser? User { get; set; } = new();
+    [SupplyParameterFromQuery]
+    public string ReturnUrl { get; set; } = "/";
+    private bool IsAdminOrModerator = false;
 
-    //TODO: Only admin can change group name,image and description  and delete group but moderators can add and remove members
-    //TODO: Only admin can add and remove moderators
-    //TODO: Only admin can add and remove admins
-    //TODO: Also add a group invite by any member or group joining request
-    protected override async Task OnInitializedAsync()
+    GroupModel UpdateGroup = new GroupModel { MemberIds = new List<string>() };
+
+
+
+    protected override async Task OnParametersSetAsync()
     {
-        Searching = false;
-        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+
+        if (groupId.HasValue)
         {
-            var userId = (await customAuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u=>u.Type == ClaimTypes.NameIdentifier)!.Value;
-            User = (await userService.GetUserDetailsAsync(userId))!;
-            Friends = await friendService.GetFriendsAsync(userId);
-            UpdateGroup.MemberIds = Friends.Select(f => f.Id).ToList();
-            SearchResults = Friends?.ToList() ?? new List<ApplicationUser>();
-        }
-        
-    }
-    protected override async  Task OnParametersSetAsync()
-    {
-        if (GroupId.HasValue)
-        {
-            var group = await groupService.GetGroupByIdAsync(GroupId.Value);
-            if (group != null)
+            CurrentGroup = await groupService.GetGroupByIdAsync(groupId.Value);
+            if (CurrentGroup != null)
             {
-                UpdateGroup.Name = group.Name!;
-                UpdateGroup.Description = group.Description!;
-                UpdateGroup.MemberIds = group.MemberIds;
-                ImagePreviewUrl = group.ImageUrl;
+                UpdateGroup.Name = CurrentGroup.Name!;
+                UpdateGroup.Description = CurrentGroup.Description!;
+                
+                UpdateGroup.MemberIds = CurrentGroup.MemberIds;
             }
         }
-        
-    }
 
+        string userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+        
+        if (CurrentGroup.AdminIds.Contains(userId) || CurrentGroup.ModeratorIds.Contains(userId))
+        {
+            IsAdminOrModerator = true;
+        }
+        else
+        {
+            Console.WriteLine("User is not admin or moderator");
+            return;
+        }
+        Friends = await friendService.GetFriendsAsync(userId);
+
+    }
     private void AddMember(string userId)
     {
         if (!UpdateGroup.MemberIds.Contains(userId))
@@ -250,11 +204,10 @@
         {
             var result = await groupService.UpdateGroupAsync(new Group()
                 {
-                    Id = GroupId!.Value,
+                    Id = groupId!.Value,
                     Name = UpdateGroup.Name,
                     Description = UpdateGroup.Description,
                     MemberIds = UpdateGroup.MemberIds,
-                    ImageUrl = ImagePreviewUrl
                 });
 
             if (result.Succeeded)
@@ -267,32 +220,5 @@
             }
         }
         Searching = false;
-    }
-
-    private async Task HandleFileChange(InputFileChangeEventArgs e)
-    {
-        var file = e.File;
-        if (file != null)
-        {
-            var buffer = new byte[file.Size];
-            await file.OpenReadStream().ReadAsync(buffer);
-
-            if (file.ContentType != "image/jpeg" && file.ContentType != "image/jpg" && file.ContentType != "image/png")
-            {
-                ErrorMessage = "Only jpg, jpegs and pngs are allowed";
-                ImagePreviewUrl = null;
-                return;
-            }
-
-            if (file.Size > 2 * 1024 * 1024)
-            {
-                ErrorMessage = "File size should be less than 2MB";
-                ImagePreviewUrl = null;
-                return;
-            }
-
-            ErrorMessage = null;
-            ImagePreviewUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
-        }
     }
 }

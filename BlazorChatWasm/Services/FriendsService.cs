@@ -1,5 +1,5 @@
-﻿using BlazorChatWasm.Models;
-using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models.Auth;
+using BlazorChatWasm.Models.User;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -71,8 +71,9 @@ namespace BlazorChatWasm.Services
 
         public async Task<List<ApplicationUser>> GetFriendsAsync(string userId)
         {
+            Console.WriteLine("Getting friends");
             var data = await _httpClient.GetFromJsonAsync<List<ApplicationUser>>($"api/friends/{userId}");
-
+            
             return data!;
         }
 

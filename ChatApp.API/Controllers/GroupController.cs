@@ -38,7 +38,8 @@ namespace ChatApp.API.Controllers
                 {
                     return new FormResult() { Succeeded = false, Errors = ["Already a member"] };
                 }
-                group.Members!.Add(new GroupMember { GroupId = groupId, UserId = userId });
+                //group.Members!.Add(new GroupMember { GroupId = groupId, UserId = userId });
+                group.GroupRequestsReceived.Add(new GroupRequest() { GroupId = groupId, SenderId = userId, RequestDate = DateTime.Now });
             }
             catch (Exception ex)
             {
@@ -114,7 +115,8 @@ namespace ChatApp.API.Controllers
                 if (!isMember)
                 {
                     //return new FormResult { Succeeded = false,Errors=  ["Not found"]};
-                    return NoContent();
+                    return Unauthorized();
+
                 }
 
                 // Fetch group details
@@ -128,6 +130,7 @@ namespace ChatApp.API.Controllers
                                                         .AsNoTracking()
                                                         .Include(g => g.Members)!
                                                             .ThenInclude(m => m.User)
+                                                        
                                                         .FirstOrDefaultAsync(g => g.Id == groupId);
 
                 var groupDto = new BaseGroupDTO
@@ -254,11 +257,31 @@ namespace ChatApp.API.Controllers
 
             }
             await Context.SaveChangesAsync();
-            var addMembers = await AddGroupMembers(groupId, newGroup.MemberIds);
-            if (addMembers.Succeeded == false)
+            if (newGroup.AdminIds.Count > 0)
             {
-                return addMembers;
+                var addAdmins = await AddGroupAdmins(groupId, newGroup.AdminIds);
+                if (addAdmins.Succeeded == false)
+                {
+                    return addAdmins;
+                }
             }
+            if (newGroup.ModeratorIds.Count > 0)
+            {
+                var addModerators = await AddGroupModerators(groupId, newGroup.AdminIds);
+                if (addModerators.Succeeded == false)
+                {
+                    return addModerators;
+                }
+            }
+            if (newGroup.MemberIds.Count != 0)
+            {
+                var addMembers = await AddGroupMembers(groupId, newGroup.MemberIds);
+                if (addMembers.Succeeded == false)
+                {
+                    return addMembers;
+                }
+            }
+            
             return new FormResult() { Succeeded = true, Errors = null };
 
         }
@@ -297,6 +320,7 @@ namespace ChatApp.API.Controllers
                 }
                 //group.MemberIds.AddRange(newMemberIds);
                 await Context.GroupMembers.AddRangeAsync(newMembers);
+                
                 await Context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -311,6 +335,104 @@ namespace ChatApp.API.Controllers
 
 
         }
+
+        //[HttpPut("{groupId}/add/admin")]
+        public async Task<FormResult> AddGroupAdmins(int groupId, List<string> adminIds)
+        {
+            using var transaction = await Context.Database.BeginTransactionAsync();
+            try
+            {
+                var group = await Context.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
+                if (group is null)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
+                }
+                var existingAdminIds = await Context.GroupMembers.Where(u => u.GroupId == group.Id && u.IsAdmin).Select(g => g.UserId).ToHashSetAsync();
+                var newAdminIds = adminIds.Except(existingAdminIds).ToList();
+                var invalidAdminIds = new List<string>();
+                var newAdmins = new List<GroupMember>();
+                foreach (var memberId in newAdminIds)
+                {
+                    var user = await UserManager.FindByIdAsync(memberId);
+                    if (user is null)
+                    {
+                        invalidAdminIds.Add(memberId);
+                    }
+                    else
+                    {
+                        newAdmins.Add(new GroupMember { GroupId = groupId, UserId = memberId ,IsAdmin = true});
+                    }
+                }
+                if (invalidAdminIds.Count != 0)
+                {
+
+                    return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
+                }
+                //group.MemberIds.AddRange(newMemberIds);
+                await Context.GroupMembers.AddRangeAsync(newAdmins);
+                await Context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return new FormResult() { Succeeded = true, Errors = null };
+                //return Ok(await Context.GroupMembers.AsNoTracking().Where(g => g.GroupId == groupId).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
+            }
+
+
+        }
+
+        public async Task<FormResult> AddGroupModerators(int groupId, List<string> adminIds)
+        {
+            using var transaction = await Context.Database.BeginTransactionAsync();
+            try
+            {
+                var group = await Context.Groups.FirstOrDefaultAsync(g => g.Id == groupId);
+                if (group is null)
+                {
+                    return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
+                }
+                var existingModeratorIds = await Context.GroupMembers.Where(u => u.GroupId == group.Id && u.IsModerator).Select(g => g.UserId).ToHashSetAsync();
+                var newModeratorIds = adminIds.Except(existingModeratorIds).ToList();
+                var invalidModeratorIds = new List<string>();
+                var newModerators = new List<GroupMember>();
+                foreach (var memberId in newModeratorIds)
+                {
+                    var user = await UserManager.FindByIdAsync(memberId);
+                    if (user is null)
+                    {
+                        invalidModeratorIds.Add(memberId);
+                    }
+                    else
+                    {
+                        newModerators.Add(new GroupMember { GroupId = groupId, UserId = memberId, IsModerator = true });
+                    }
+                }
+                if (invalidModeratorIds.Count != 0)
+                {
+
+                    return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
+                }
+                //group.MemberIds.AddRange(newMemberIds);
+                await Context.GroupMembers.AddRangeAsync(newModerators);
+                await Context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return new FormResult() { Succeeded = true, Errors = null };
+                //return Ok(await Context.GroupMembers.AsNoTracking().Where(g => g.GroupId == groupId).ToListAsync());
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return new FormResult() { Succeeded = false, Errors = [ex.Message] };
+            }
+
+
+        }
+
 
 
         [Authorize(Policy = "Administrator")]

@@ -1,75 +1,160 @@
 ﻿@page "/groups/{groupId:int?}"
 @using System.Security.Claims
+@using BlazorChatWasm.Models.DTOs
 @attribute [Authorize]
 <div class="row">
     <div class="col-lg-6 ">
-        
-        <div>
+
+        @if (groupId != null)
+        {
+            <GroupCard groupId="@groupId" />
+        }
+        <div class="mt-3">
+
             <div>
-                <div class="px-3"><h3>Members</h3></div>
-            </div>
+                <div class="px-3"><h3>Group Requests</h3></div>
+                <div>
+                    <a href="groups/requests/status?ReturnUrl=groups" class="btn btn-link d-flex text-decoration-none align-items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-add" viewBox="0 0 16 16">
+                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0M8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4" />
+                            <path d="M8.256 14a4.5 4.5 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10q.39 0 .74.025c.226-.341.496-.65.804-.918Q8.844 9.002 8 9c-5 0-6 3-6 4s1 1 1 1z" />
+                        </svg>
+                        <span class="px-3 mb-1">View Requests Status?</span>
 
-            @foreach (var user in Group.Members)
-            {
-                <div class="card my-2">
-                    <h5 class="card-header">@user.UserName</h5>
-                    <div class="card-body">
-                        <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
-                        @* <p class="card-text">@user.Bio</p> *@
-
-
-                        <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
-
-
-
-                    </div>
+                    </a>
                 </div>
-            }
+            </div>
+            <div>
+                @foreach (var request in GroupRequests)
+                {
+                    if (request == null)
+                    {
+                        <div class="d-flex justify-content-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card my-2">
+                            <h5 class="card-header">@request.Sender.UserName</h5>
+                            <div class="card-body">
+                                <h5 class="card-title"><img src="@request.Sender.ImageUrl" width="40" height="40" style="border-radius:40%" />@request.Sender.Email</h5>
+
+                                <button class="btn btn-outline-info w-20 me-2" @onclick="()=>ShowUserModal(request.SenderId)">View Profile</button>
+                                @if (!IsLoading)
+                                {
+                                    <button class="btn btn-outline-success w-25 me-3" @onclick="()=> AcceptAsync(request.SenderId,request.GroupId)">Accept</button>
+
+                                    <button class="btn btn-outline-danger w-25" @onclick="()=> RejectAsync(request.SenderId,request.GroupId)">Reject</button>
+
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-success w-25 me-3">
+                                        <div class="spinner-grow spinner-grow-sm" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+
+                                    <button class="btn btn-outline-danger w-25">
+                                        <div class="spinner-grow spinner-grow-sm" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </button>
+                                }
+
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
         </div>
-
-
-
-
     </div>
     <div class="col-lg-6 ">
-       
+
         <div>
-            <div>
-                <div class="px-3"><h3>Admins</h3></div>
+            <div class="mb-3 ">
+                <div class="px-3 d-flex justify-content-between align-items-center container">
+                    <h3>Admins</h3>
+                    <a href="groups/@groupId/add/admin">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
+                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                            <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
+                        </svg>
+                    </a>
+                </div>
+
+                <div>
+                    @foreach (var user in Group!.Admins)
+                    {
+                        <div class="card my-2">
+                            <h5 class="card-header">@user.UserName</h5>
+                            <div class="card-body">
+                                <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
+                                <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="px-3 d-flex justify-content-between align-items-center container ">
+                    <h3>Moderators</h3>
+                    <a href="groups/@groupId/add/moderator">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
+                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                        <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
+                    </svg>
+                    </a>
+                </div>
+
+                <div>
+                    @foreach (var user in Group.Moderators ?? [])
+                    {
+                        <div class="card my-2">
+                            <h5 class="card-header">@user.UserName</h5>
+                            <div class="card-body">
+                                <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
+                                @* <p class="card-text">@user.Bio</p> *@
+                                <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
+
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="mb-3">
+                <div class="px-3 d-flex justify-content-between align-items-center container">
+                    <h3>Members</h3>
+                    <a href="groups/@groupId/add">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
+                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
+                        <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
+                    </svg>
+                    </a>
+                </div>
+
+                @foreach (var user in Group.Members)
+                {
+                    <div class="card my-2">
+                        <h5 class="card-header">@user.UserName</h5>
+                        <div class="card-body">
+                            <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
+                            @* <p class="card-text">@user.Bio</p> *@
+
+
+                            <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
+
+
+
+                        </div>
+                    </div>
+                }
 
             </div>
 
-            @foreach (var user in Group.Admins)
-            {
-                <div class="card my-2">
-                    <h5 class="card-header">@user.UserName</h5>
-                    <div class="card-body">
-                        <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
-                        @* <p class="card-text">@user.Bio</p> *@
-
-                        <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
-
-                    </div>
-                </div>
-            }
-        </div>
-        <div>
-            <div>
-                <div class="px-3"><h3>Moderators</h3></div>
-            </div>
-
-            @foreach (var user in Group.Moderators ?? [])
-            {
-                <div class="card my-2">
-                    <h5 class="card-header">@user.UserName</h5>
-                    <div class="card-body">
-                        <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
-                        @* <p class="card-text">@user.Bio</p> *@
-                        <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
-
-                    </div>
-                </div>
-            }
         </div>
     </div>
 </div>
@@ -77,6 +162,9 @@
 
     [Parameter] public int? groupId { get; set; }
     Group Group = new Group();
+    public bool IsLoading = false;
+    private string? ErrorMessage;
+    List<GroupRequest> GroupRequests = new List<GroupRequest>();
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
 
     private void ShowModal(string userId)
@@ -89,11 +177,72 @@
     protected override async Task OnInitializedAsync()
     {
 
-        if (!groupId.HasValue) return;
+        if (groupId == null) return;
+
         Group = await groupService.GetGroupByIdAsync(groupId.Value);
+
+        GroupRequests = await groupRequestService.GetGroupRequestsAsync(groupId.Value);
+
     }
 
 
+    private async Task AcceptAsync(string senderId, int groupId)
+    {
+        IsLoading = true;
 
+        if (ErrorMessage != null)
+        {
+            IsLoading = false;
+            return;
+        }
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await groupRequestService.AcceptAsync(new GroupRequestDTO { groupId = groupId, senderId = senderId });
+            Console.WriteLine($"{result.Succeeded}");
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Added friend Successfully");
+                GroupRequests.RemoveAll(u => u.SenderId == senderId);
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+    private async Task RejectAsync(string senderId, int groupId)
+    {
 
+        if (ErrorMessage != null)
+        {
+            IsLoading = false;
+            return;
+        }
+        ErrorMessage = null;
+        if (AuthProvider is CustomAuthenticationStateProvider customAuthProvider)
+        {
+            var result = await groupRequestService.RejectAsync(new GroupRequestDTO { groupId = groupId, senderId = senderId });
+
+            if (result.Succeeded)
+            {
+                await JS.InvokeVoidAsync("alert", $"Deleted Friend Request Successfully");
+            }
+            else
+            {
+                ErrorMessage = result.Errors![0];
+            }
+        }
+        IsLoading = false;
+        StateHasChanged();
+    }
+    private void ShowUserModal(string userId)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("UserId", userId);
+        Modal.Show<UserModal>("Profile", parameters);
+
+    }
 }

@@ -1,8 +1,9 @@
 ﻿using BlazorChatWasm.Models.Chat;
+using BlazorChatWasm.Models.Groups;
 using Microsoft.AspNetCore.Identity;
 using System.Text.Json.Serialization;
 
-namespace BlazorChatWasm.Models
+namespace BlazorChatWasm.Models.User
 {
     public class ApplicationUser : IdentityUser
     {

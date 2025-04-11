@@ -1,6 +1,6 @@
-﻿using BlazorChatWasm.Models;
-using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models.Auth;
 using BlazorChatWasm.Models.DTOs;
+using BlazorChatWasm.Models.Groups;
 using System.Data.Common;
 using System.Net.Http.Json;
 
@@ -19,7 +19,13 @@ namespace BlazorChatWasm.Services
         public async Task<List<GroupRequest>> GetGroupRequestsAsync(int groupId)
         {
 
-            return (await httpClient.GetFromJsonAsync<List<GroupRequest>>($"api/Grouprequest/{groupId}"))!;
+            var response = await httpClient.GetFromJsonAsync<List<GroupRequest>>($"api/Grouprequest/{groupId}");
+            if(response == null)
+            {
+                Console.WriteLine("No group requests");
+                return new List<GroupRequest>();
+            }
+            return response;
         }
 
 

@@ -1,4 +1,4 @@
-﻿using BlazorChatWasm.Models;
+﻿using BlazorChatWasm.Models.User;
 using Microsoft.AspNetCore.Authorization;
 using System.Net.Http;
 using System.Net.Http.Json;

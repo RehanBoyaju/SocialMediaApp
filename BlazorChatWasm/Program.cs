@@ -22,6 +22,8 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<FriendsService>();
 builder.Services.AddScoped<GroupService>();
 builder.Services.AddScoped<FriendRequestService>();
+builder.Services.AddScoped<GroupRequestService>();
+
 
 
 await builder.Build().RunAsync();

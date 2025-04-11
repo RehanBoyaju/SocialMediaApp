@@ -1,0 +1,33 @@
+﻿<div>
+    <h2 style="text-align:center">Group Details</h2>
+
+    @if (Group != null)
+    {
+        <div class="card">
+            <img src="@Group.ImageUrl" alt="Group" width="100" height="100" style="border-radius:50%; margin:0px auto">
+            <h4>@Group.Name</h4>
+            <p class="title">@Group.Description</p>
+            <div style="margin: 2vw 0;">
+                <a href="#"><i class="fa fa-dribbble"></i></a>
+                <a href="#"><i class="fa fa-twitter"></i></a>
+                <a href="#"><i class="fa fa-linkedin"></i></a>
+                <a href="#"><i class="fa fa-facebook"></i></a>
+            </div>
+            <p><button @onclick="()=> NavigateToChat(Group.Id)">Chat</button></p>
+        </div>
+    }
+</div>
+@code {
+    [Parameter] public int? groupId { get; set; }
+    Group Group = new Group();
+    protected override async Task OnInitializedAsync()
+    {
+        if (groupId == null) return;
+        Group = await groupService.GetGroupByIdAsync(groupId.Value);
+
+    }
+    private void NavigateToChat(int groupId)
+    {
+        NavigationManager.NavigateTo($"chat/group/{groupId}");
+    }
+}

@@ -26,7 +26,7 @@ namespace ChatApp.API.Data
         [NotMapped]
         public virtual List<string> MemberIds { get; set; } = []; 
         [NotMapped]
-        public virtual HashSet<string> AdminIds { get; set; } = [];
+        public virtual List<string> AdminIds { get; set; } = [];
         [NotMapped]
         public virtual List<string> ModeratorIds { get; set; } = [];
         [JsonIgnore]

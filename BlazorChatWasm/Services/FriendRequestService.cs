@@ -1,5 +1,5 @@
-﻿using BlazorChatWasm.Models;
-using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models.Auth;
+using BlazorChatWasm.Models.User;
 using System.Data.Common;
 using System.Net.Http.Json;
 

@@ -1,4 +1,8 @@
-﻿namespace BlazorChatWasm.Models.Chat
+﻿using BlazorChatWasm.Models.User;
+using BlazorChatWasm.Models.Groups;
+
+
+namespace BlazorChatWasm.Models.Chat
 {
     public class ChatMessage
     {

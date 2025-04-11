@@ -33,18 +33,25 @@ namespace ChatApp.API.Controllers
         }
 
 
-        [HttpGet("groupId")]
+        [HttpGet("{groupId}")]
         public async Task<IActionResult> GetGroupRequestsReceivedAsync(int groupId)
         {
+            try
+            {
+                var result = await Context.GroupRequests.AsNoTracking().Include(f => f.Sender).Include(f => f.Group).Where(f => f.GroupId == groupId && f.IsAccepted == null).ToListAsync();
+                return Ok(result);
 
-            var result = await Context.GroupRequests.AsNoTracking().Include(f => f.Sender).Include(f => f.Group).Where(f => f.GroupId == groupId && f.IsAccepted == null).ToListAsync();
-            return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
 
 
         [HttpPut("accept")]
-        public async Task<FormResult> AcceptGroupRequestAsync([FromBody] GroupRequestDTO groupRequest )
+        public async Task<FormResult> AcceptGroupRequestAsync([FromBody] GroupRequestDTO groupRequest)
         {
             using var transaction = await Context.Database.BeginTransactionAsync();
             try
@@ -71,7 +78,7 @@ namespace ChatApp.API.Controllers
                 await Context.SaveChangesAsync();
 
 
-               
+
 
 
                 var updatedGroup = new List<GroupMember>();
@@ -80,7 +87,7 @@ namespace ChatApp.API.Controllers
                     UserId = groupRequest.senderId,
                     GroupId = groupRequest.groupId
                 });
-                
+
 
 
 
@@ -90,13 +97,18 @@ namespace ChatApp.API.Controllers
 
                 }
                 Context.GroupMembers.AddRange(updatedGroup);
+                var grpRequest = await Context.GroupRequests.FirstOrDefaultAsync(f => (f.SenderId == groupRequest.senderId && f.GroupId == groupRequest.groupId));
+
+                if (grpRequest is null)
+                {
+                    throw new Exception("Group request not found");
+                }
+                Context.Remove(grpRequest);
+                
                 await Context.SaveChangesAsync();
                 await transaction.CommitAsync();
-                var deleteGroupRequest = await DeleteGroupRequestAsync(groupRequest);
-                if (!deleteGroupRequest.Succeeded)
-                {
-                    throw new Exception("Friend request not found");
-                }
+                
+                
                 Console.WriteLine($"Members added  {groupRequest.senderId} in {groupRequest.groupId}");
 
             }
@@ -155,13 +167,13 @@ namespace ChatApp.API.Controllers
                 {
                     return new FormResult() { Succeeded = false, Errors = ["You are not allowed to delete this user"] };
                 }
-                var grpRequest = await Context.GroupRequests.FirstOrDefaultAsync(f => (f.SenderId == userId && f.GroupId == groupId));
+                var grpRequest = await Context.GroupRequests.FirstOrDefaultAsync(f => (f.SenderId == userId && f.GroupId ==groupId));
 
                 if (grpRequest is null)
                 {
                     return new FormResult { Succeeded = false, Errors = new[] { "Group request not found" } };
                 }
-                Context.RemoveRange(grpRequest);
+                Context.Remove(grpRequest);
                 await Context.SaveChangesAsync();
                 await transaction.CommitAsync();
             }

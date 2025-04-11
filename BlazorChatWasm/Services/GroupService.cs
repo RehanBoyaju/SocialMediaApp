@@ -1,7 +1,8 @@
-﻿using BlazorChatWasm.Models;
-using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models.Auth;
 using BlazorChatWasm.Models.Chat;
 using BlazorChatWasm.Models.DTOs;
+using BlazorChatWasm.Models.Groups;
+using BlazorChatWasm.Models.User;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
@@ -73,6 +74,7 @@ namespace BlazorChatWasm.Services
             var group = new Group() { Id = data.Id, Description = data.Description, Name = data.Name, ImageUrl = data.ImageUrl };
             foreach(var item in data.Admins)
             {
+                Console.WriteLine(item.Id);
                 group.AdminIds.Add(item.Id);
                 group.Admins.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl ,IsAdmin = true,IsModerator = false, DateAdded = item.AddedDate});
             }
@@ -121,6 +123,7 @@ namespace BlazorChatWasm.Services
                 return new FormResult() { Succeeded = false, Errors = errorsList.ToArray() };
             }
         }
+        
 
         public async Task<FormResult> JoinGroupAsync(int groupId)
         {

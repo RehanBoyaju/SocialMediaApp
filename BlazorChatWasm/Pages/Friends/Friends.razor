@@ -1,6 +1,4 @@
 ﻿@page "/friends"
-
-@using System.Security.Claims
 @attribute [Authorize]
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
@@ -8,7 +6,7 @@
         <p class="alert-danger">@ErrorMessage</p>
     </div>
 }
-@if (Loading)
+else if (Loading)
 {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
@@ -135,7 +133,7 @@ else
     List<ApplicationUser> UserFriends = new List<ApplicationUser>();
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
     private string? ErrorMessage;
-    List<Models.FriendRequest> FriendRequests = new List<Models.FriendRequest>();
+    List<FriendRequest> FriendRequests = new List<FriendRequest>();
 
     private void ShowModal(string friendId)
     {

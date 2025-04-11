@@ -1,9 +1,10 @@
 ﻿using BlazorChatWasm.Models.Chat;
+using BlazorChatWasm.Models.User;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace BlazorChatWasm.Models
+namespace BlazorChatWasm.Models.Groups
 {
     public class Group
     {
