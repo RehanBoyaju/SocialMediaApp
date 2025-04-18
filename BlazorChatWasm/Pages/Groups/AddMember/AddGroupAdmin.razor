@@ -1,6 +1,5 @@
-﻿<PageTitle>Add Group Member</PageTitle>
+﻿<PageTitle>Add Group Admin</PageTitle>
 @page "/groups/{groupId:int?}/add/admin"
-@using BlazorChatWasm.Models.DTOs
 @attribute [Authorize]
 @if (!string.IsNullOrEmpty(ErrorMessage))
 {
@@ -26,13 +25,13 @@
                     </button>
                     @if (!Searching)
                     {
-                        <button type="submit" @onclick=" ()=> { Searching = true; SearchResults = Friends!;}" class="btn btn-sm btn-outline-info mt-3">
+                        <button type="submit" @onclick=" ()=> { Searching = true; SearchResults = Candidates!;}" class="btn btn-sm btn-outline-info mt-3">
                             Show other friends
                         </button>
                     }
                     else
                     {
-                        <button type="submit" @onclick=" ()=> { Searching = false; SearchResults = new();}" class="btn btn-sm btn-outline-info mt-3">
+                        <button type="submit" @onclick=" ()=> { Searching = false; SearchResults = new List<ApplicationUser>();}" class="btn btn-sm btn-outline-info mt-3">
                             Hide Search Results
                         </button>
                     }
@@ -124,13 +123,16 @@
     private string? ErrorMessage;
     public Group CurrentGroup = new();
     private List<ApplicationUser>? Friends { get; set; } = null;
-    private List<ApplicationUser> SearchResults { get; set; } = new();
+    private IEnumerable<ApplicationUser>? Candidates { get; set; } = null;
+
+    private IEnumerable<ApplicationUser> SearchResults { get; set; } = new List<ApplicationUser>();
+
     private string SearchFriend { get; set; } = string.Empty;
     private bool Searching = false;
     public ApplicationUser? User { get; set; } = new();
     [SupplyParameterFromQuery]
-    public string ReturnUrl { get; set; } = "/groups/{groupId}";
-    private bool IsAdminOrModerator = false;
+    public string ReturnUrl { get; set; } = "";
+    private bool IsAdmin = false;
 
     GroupModel UpdateGroup = new GroupModel { AdminIds = new List<string>() };
 
@@ -141,12 +143,12 @@
 
         if (groupId.HasValue)
         {
+            ReturnUrl = $"/groups/{groupId}";
             CurrentGroup = await groupService.GetGroupByIdAsync(groupId.Value);
             if (CurrentGroup != null)
             {
                 UpdateGroup.Name = CurrentGroup.Name!;
                 UpdateGroup.Description = CurrentGroup.Description!;
-                UpdateGroup.AdminIds = CurrentGroup.AdminIds;
             }
         }
 
@@ -154,15 +156,16 @@
 
         if (CurrentGroup!.AdminIds.Contains(userId) )
         {
-            IsAdminOrModerator = true;
+            IsAdmin = true;
         }
         else
         {
-            Console.WriteLine("User is not admin or moderator");
+            Console.WriteLine("User is not admin ");
             return;
         }
         Friends = await friendService.GetFriendsAsync(userId);
-
+        Candidates = Friends.Except(CurrentGroup.Admins);
+        Console.WriteLine($"Candidates: {string.Join(", ", Candidates.Select(c => c.UserName))}");
     }
     private void AddMember(string userId)
     {
@@ -186,11 +189,11 @@
 
         if (string.IsNullOrEmpty(SearchFriend))
         {
-            SearchResults = Friends.ToList();
+            SearchResults = Candidates.ToList();
         }
         else
         {
-            SearchResults = Friends.Where(f =>
+            SearchResults = Candidates.Where(f =>
                 f.UserName?.Contains(SearchFriend, StringComparison.OrdinalIgnoreCase) == true ||
                 f.Email?.Contains(SearchFriend, StringComparison.OrdinalIgnoreCase) == true)
                 .ToList();

@@ -42,13 +42,21 @@
 
                 @if (Searching)
                 {
-                    @if (SearchResults!= null && SearchResults.Any())
+                    @if (SearchResults != null && SearchResults.Any())
                     {
                         <div class="mt-3">
                             <h5>Search Results</h5>
                             <ul class="list-group">
                                 @foreach (var user in SearchResults)
                                 {
+                                    if (user.Id == userId || CurrentGroup.Admins.Contains(user))
+                                    {
+                                        continue;
+                                    }
+                                    if ((IsModerator && CurrentGroup.Moderators.Contains(user)) || (!IsAdminOrModerator))
+                                    {
+                                        continue;
+                                    }
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         <div class="d-flex align-items-center">
                                             <img src="@user.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
@@ -82,23 +90,28 @@
             @if (UpdateGroup.MemberIds.Any())
             {
                 <div class="mb-3">
-                    <h5>Selected Members (@UpdateGroup.MemberIds.Count)</h5>
+                    <h5>Selected Members </h5>
                     <ul class="list-group">
-                        @foreach (var memberId in UpdateGroup.MemberIds)
+                        @foreach (var member in CurrentGroup.Members)
                         {
-                            var member = Friends?.FirstOrDefault(f => f.Id == memberId);
-                            if (member != null)
+                            if (member.Id == userId || member.IsAdmin)
                             {
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div class="d-flex align-items-center">
-                                        <img src="@member.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
-                                        <span>@member.UserName</span>
-                                    </div>
-                                    <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(member.Id))">
-                                        Remove
-                                    </button>
-                                </li>
+                                continue;
                             }
+                            if((IsModerator && member.IsModerator) || (!IsAdminOrModerator))
+                            {
+                                continue;
+                            }
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <img src="@member.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
+                                    <span>@member.UserName</span>
+                                </div>
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="@(() => RemoveMember(member.Id))">
+                                    Remove
+                                </button>
+                            </li>
+
                         }
                     </ul>
                 </div>
@@ -130,8 +143,10 @@
     public ApplicationUser? User { get; set; } = new();
     [SupplyParameterFromQuery]
     public string ReturnUrl { get; set; } = "/";
+    private bool IsAdmin = false;
+    private bool IsModerator = false;
     private bool IsAdminOrModerator = false;
-
+    public string userId = "";
     GroupModel UpdateGroup = new GroupModel { MemberIds = new List<string>() };
 
 
@@ -141,21 +156,27 @@
 
         if (groupId.HasValue)
         {
+
             CurrentGroup = await groupService.GetGroupByIdAsync(groupId.Value);
             if (CurrentGroup != null)
             {
                 UpdateGroup.Name = CurrentGroup.Name!;
                 UpdateGroup.Description = CurrentGroup.Description!;
-                
+
                 UpdateGroup.MemberIds = CurrentGroup.MemberIds;
             }
         }
 
-        string userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
-        
-        if (CurrentGroup.AdminIds.Contains(userId) || CurrentGroup.ModeratorIds.Contains(userId))
+        userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+
+        User = CurrentGroup!.Members.FirstOrDefault(u => u.Id == userId);
+        IsAdmin = User!.IsAdmin;
+        IsModerator = User.IsModerator;
+
+        if (IsAdmin || IsModerator)
         {
             IsAdminOrModerator = true;
+
         }
         else
         {

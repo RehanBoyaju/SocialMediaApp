@@ -165,8 +165,8 @@ namespace ChatApp.API.Controllers
                         UserName = m.User.UserName,
                         Email = m.User.Email,
                         ImageUrl = m.User.ImageUrl,
-                        IsAdmin = false,
-                        IsModerator = false,
+                        IsAdmin = m.IsAdmin,
+                        IsModerator = m.IsModerator,
                         AddedDate = m.AddedDate
                     }).ToList(),
                     MembersCount = group.Members.Count
@@ -267,7 +267,7 @@ namespace ChatApp.API.Controllers
             }
             if (newGroup.ModeratorIds.Count > 0)
             {
-                var addModerators = await AddGroupModerators(groupId, newGroup.AdminIds);
+                var addModerators = await AddGroupModerators(groupId, newGroup.ModeratorIds);
                 if (addModerators.Succeeded == false)
                 {
                     return addModerators;
@@ -360,16 +360,27 @@ namespace ChatApp.API.Controllers
                     }
                     else
                     {
-                        newAdmins.Add(new GroupMember { GroupId = groupId, UserId = memberId ,IsAdmin = true});
+                        var member = await Context.GroupMembers.FirstOrDefaultAsync(g => g.GroupId == groupId && g.UserId == memberId);
+                        if (member is not null)
+                        {
+                            member.IsAdmin = true;
+                        }
+                        else
+                        {
+                            newAdmins.Add(new GroupMember { GroupId = groupId, UserId = memberId, IsAdmin = true });
+                        }
                     }
                 }
                 if (invalidAdminIds.Count != 0)
                 {
 
-                    return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
+                    return new FormResult() { Succeeded = false, Errors = [$"Some members not found: {string.Join(", ", invalidAdminIds)}"] };
                 }
                 //group.MemberIds.AddRange(newMemberIds);
-                await Context.GroupMembers.AddRangeAsync(newAdmins);
+                if (newAdmins.Count > 0)
+                {
+                    await Context.GroupMembers.AddRangeAsync(newAdmins);
+                }
                 await Context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -385,7 +396,7 @@ namespace ChatApp.API.Controllers
 
         }
 
-        public async Task<FormResult> AddGroupModerators(int groupId, List<string> adminIds)
+        public async Task<FormResult> AddGroupModerators(int groupId, List<string> moderatorIds)
         {
             using var transaction = await Context.Database.BeginTransactionAsync();
             try
@@ -396,7 +407,7 @@ namespace ChatApp.API.Controllers
                     return new FormResult() { Succeeded = false, Errors = ["Group not found"] };
                 }
                 var existingModeratorIds = await Context.GroupMembers.Where(u => u.GroupId == group.Id && u.IsModerator).Select(g => g.UserId).ToHashSetAsync();
-                var newModeratorIds = adminIds.Except(existingModeratorIds).ToList();
+                var newModeratorIds = moderatorIds.Except(existingModeratorIds).ToList();
                 var invalidModeratorIds = new List<string>();
                 var newModerators = new List<GroupMember>();
                 foreach (var memberId in newModeratorIds)
@@ -408,16 +419,27 @@ namespace ChatApp.API.Controllers
                     }
                     else
                     {
-                        newModerators.Add(new GroupMember { GroupId = groupId, UserId = memberId, IsModerator = true });
+                        var member = await Context.GroupMembers.FirstOrDefaultAsync(g => g.GroupId == groupId && g.UserId == memberId);
+                        if (member is not null)
+                        {
+                            member.IsModerator = true;
+                        }
+                        else
+                        {
+                            newModerators.Add(new GroupMember { GroupId = groupId, UserId = memberId, IsModerator = true });
+
+                        }
                     }
                 }
                 if (invalidModeratorIds.Count != 0)
                 {
 
-                    return new FormResult() { Succeeded = false, Errors = ["Some members not found: {string.Join(", ", invalidMemberIds)}"] };
+                    return new FormResult() { Succeeded = false, Errors = [$"Some members not found: {string.Join(", ", invalidModeratorIds)}"] };
                 }
-                //group.MemberIds.AddRange(newMemberIds);
-                await Context.GroupMembers.AddRangeAsync(newModerators);
+                if (newModerators.Count > 0)
+                {
+                    await Context.GroupMembers.AddRangeAsync(newModerators);
+                }
                 await Context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -432,8 +454,6 @@ namespace ChatApp.API.Controllers
 
 
         }
-
-
 
         [Authorize(Policy = "Administrator")]
         [HttpDelete("delete/{groupId}")]

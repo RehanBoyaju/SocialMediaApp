@@ -26,5 +26,14 @@ namespace BlazorChatWasm.Models.User
             ChatMessagesToUsers = new HashSet<ChatMessage>();
             Groups = new HashSet<ApplicationUser>();
         }
+
+        public override bool Equals(object? obj)
+        {
+            return obj is ApplicationUser user && this.Id == user.Id;
+        }
+        public override int GetHashCode()
+        {
+            return Id.GetHashCode();
+        }
     }
 }

@@ -86,7 +86,7 @@ namespace BlazorChatWasm.Services
                 foreach (var item in data.MembersInfo)
             {
                 group.MemberIds.Add(item.Id);
-                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl, IsAdmin = false, IsModerator = false, DateAdded = item.AddedDate });
+                group.Members.Add(new ApplicationUser() { Id = item.Id, UserName = item.UserName, Email = item.Email, ImageUrl = item.ImageUrl, IsAdmin = item.IsAdmin, IsModerator = item.IsModerator, DateAdded = item.AddedDate });
             }
             return group;
         }

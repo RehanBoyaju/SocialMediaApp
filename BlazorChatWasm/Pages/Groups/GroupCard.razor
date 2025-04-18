@@ -13,7 +13,7 @@
                 <a href="#"><i class="fa fa-linkedin"></i></a>
                 <a href="#"><i class="fa fa-facebook"></i></a>
             </div>
-            <p><button @onclick="()=> NavigateToChat(Group.Id)">Chat</button></p>
+            <div class="d-flex justify-content-between p-2 gap-2"><button class="btn btn-outline-info" @onclick="()=> NavigateToChat(Group.Id)">Chat</button ><button class="btn btn-outline-secondary" @onclick="()=> NavigateToEdit(Group.Id)">Edit Group</button></div>
         </div>
     }
 </div>
@@ -24,10 +24,13 @@
     {
         if (groupId == null) return;
         Group = await groupService.GetGroupByIdAsync(groupId.Value);
-
     }
     private void NavigateToChat(int groupId)
     {
         NavigationManager.NavigateTo($"chat/group/{groupId}");
+    }
+    private void NavigateToEdit(int groupId)
+    {
+        NavigationManager.NavigateTo($"groups/edit/{groupId}");
     }
 }

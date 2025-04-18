@@ -2,6 +2,8 @@
 @using System.Security.Claims
 @using BlazorChatWasm.Models.DTOs
 @attribute [Authorize]
+
+
 <div class="row">
     <div class="col-lg-6 ">
 
@@ -78,12 +80,15 @@
             <div class="mb-3 ">
                 <div class="px-3 d-flex justify-content-between align-items-center container">
                     <h3>Admins</h3>
-                    <a href="groups/@groupId/add/admin">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
-                            <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                            <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
-                        </svg>
-                    </a>
+                    @if (CurrentUser != null && CurrentUser.IsAdmin)
+                    {
+                        <a href="groups/@groupId/add/admin">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </a>
+                    }
                 </div>
 
                 <div>
@@ -102,13 +107,17 @@
             <div class="mb-3">
                 <div class="px-3 d-flex justify-content-between align-items-center container ">
                     <h3>Moderators</h3>
-                    <a href="groups/@groupId/add/moderator">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
-                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                        <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
-                    </svg>
-                    </a>
+                    @if (CurrentUser != null && (CurrentUser.IsAdmin || CurrentUser.IsModerator))
+                    {
+                        <a href="groups/@groupId/add/moderator">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                                <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                                <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                            </svg>
+                        </a>
+                    }
                 </div>
+
 
                 <div>
                     @foreach (var user in Group.Moderators ?? [])
@@ -129,35 +138,34 @@
                 <div class="px-3 d-flex justify-content-between align-items-center container">
                     <h3>Members</h3>
                     <a href="groups/@groupId/add">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
-                        <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0" />
-                        <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4" />
-                    </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil-square" viewBox="0 0 16 16">
+                            <path d="M15.502 1.94a.5.5 0 0 1 0 .706L14.459 3.69l-2-2L13.502.646a.5.5 0 0 1 .707 0l1.293 1.293zm-1.75 2.456-2-2L4.939 9.21a.5.5 0 0 0-.121.196l-.805 2.414a.25.25 0 0 0 .316.316l2.414-.805a.5.5 0 0 0 .196-.12l6.813-6.814z" />
+                            <path fill-rule="evenodd" d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-1 0v6a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-11a.5.5 0 0 1 .5-.5H9a.5.5 0 0 0 0-1H2.5A1.5 1.5 0 0 0 1 2.5z" />
+                        </svg>
                     </a>
                 </div>
+                <div>
+                    @foreach (var user in Group.Members)
+                    {
+                        <div class="card my-2">
+                            <h5 class="card-header">@user.UserName</h5>
+                            <div class="card-body">
+                                <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
+                                @* <p class="card-text">@user.Bio</p> *@
 
-                @foreach (var user in Group.Members)
-                {
-                    <div class="card my-2">
-                        <h5 class="card-header">@user.UserName</h5>
-                        <div class="card-body">
-                            <h5 class="card-title"><img src="@user.ImageUrl" width="40" height="40" style="border-radius:40%" />@user.Email</h5>
-                            @* <p class="card-text">@user.Bio</p> *@
+                                <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
 
-
-                            <button class="btn btn-outline-info w-20" @onclick="() => ShowModal(user.Id)">View Profile</button>
-
-
-
+                            </div>
                         </div>
-                    </div>
-                }
+                    }
+                </div>
 
             </div>
 
         </div>
     </div>
 </div>
+
 @code {
 
     [Parameter] public int? groupId { get; set; }
@@ -165,23 +173,35 @@
     public bool IsLoading = false;
     private string? ErrorMessage;
     List<GroupRequest> GroupRequests = new List<GroupRequest>();
+    ApplicationUser? CurrentUser = new();
     [CascadingParameter] public IModalService Modal { get; set; } = default!;
+
+
 
     private void ShowModal(string userId)
     {
         var parameters = new ModalParameters();
         parameters.Add("UserId", userId);
         Modal.Show<UserModal>("Profile", parameters);
-
     }
     protected override async Task OnInitializedAsync()
     {
+        var userId = (await AuthProvider.GetAuthenticationStateAsync()).User.Claims.FirstOrDefault(u => u.Type == ClaimTypes.NameIdentifier)!.Value;
+
+        if (userId is null)
+        {
+            Console.WriteLine("User not authorized");
+            return;
+        }
+
 
         if (groupId == null) return;
 
         Group = await groupService.GetGroupByIdAsync(groupId.Value);
 
         GroupRequests = await groupRequestService.GetGroupRequestsAsync(groupId.Value);
+
+        CurrentUser = Group.Members.FirstOrDefault(u => u.Id == userId);
 
     }
 

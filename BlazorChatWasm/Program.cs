@@ -27,3 +27,6 @@ builder.Services.AddScoped<GroupRequestService>();
 
 
 await builder.Build().RunAsync();
+
+//TODO: Add a app adminstrator where he can see everything
+//TODO: Use refresh token
