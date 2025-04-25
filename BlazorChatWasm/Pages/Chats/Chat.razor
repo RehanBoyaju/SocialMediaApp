@@ -71,7 +71,7 @@ else
                             <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#d3d3d3; transform: scale(1.02)" @onclick="() => LoadUserChatAsync(user.Id)">
                                 <div class="d-flex align-items-center justify-content-between gap-2" >
                                     <div class="mr-4 ">
-                                        <img src="@user.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        <img src="@user.ImageUrl" alt="pfp" height="50" width="40" loading="eager" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@user.UserName</p>
@@ -84,7 +84,7 @@ else
                             <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#F5F5F5"  @onclick ="() => LoadUserChatAsync(user.Id)">
                                 <div class="d-flex align-items-center justify-content-between gap-2">
                                     <div class="mr-4 ">
-                                        <img src="@user.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        <img src="@user.ImageUrl" alt="pfp" loading="eager" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@user.UserName</p>
@@ -125,7 +125,7 @@ else
                             <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#F5F5F5 " @onclick="() => LoadGroupChatAsync(group.Id)">
                                 <div class="d-flex align-items-center justify-content-between gap-2">
                                     <div class="mr-4 ">
-                                        <img src="@group.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        <img src="@group.ImageUrl" loading="eager"  alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@group.Name</p>
@@ -138,7 +138,7 @@ else
                             <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color:#d3d3d3; transform: scale(1.05)" @onclick="() => LoadGroupChatAsync(group.Id)">
                                 <div class="d-flex align-items-center justify-content-between gap-2">
                                     <div class="mr-4 ">
-                                        <img src="@group.ImageUrl" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                        <img src="@group.ImageUrl" loading="eager" alt="pfp" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                     </div>
                                     <div>
                                         <p class="mb-0">@group.Name</p>
@@ -164,7 +164,7 @@ else
                             if (CurrentGroup != null)
                             {
                                 <div class="avatar">
-                                    <img src="@CurrentGroup.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                    <img src="@CurrentGroup.ImageUrl" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                 </div>
                                 <span>@CurrentGroup.Name</span>
                             }
@@ -178,7 +178,7 @@ else
                             if (Contact != null)
                             {
                                 <div class="avatar">
-                                    <img src="@Contact.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                    <img src="@Contact.ImageUrl" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                 </div>
                                 <span>@Contact.UserName</span>
 
@@ -240,7 +240,7 @@ else
                                     <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@CurrentUser.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@CurrentUser.ImageUrl" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -259,7 +259,7 @@ else
                                         <div class="mr-4">
                                             <div class="avatar">
 
-                                                <img src="@GetProfileOfGroupMember(msg.FromUserId!)" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@GetProfileOfGroupMember(msg.FromUserId!)" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -280,7 +280,7 @@ else
                                     <div class="d-flex flex-row " style=" justify-content: flex-end; padding-right:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@CurrentUser.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@CurrentUser.ImageUrl" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
@@ -296,7 +296,7 @@ else
                                     <div class="d-flex flex-row my-4" style="padding-left:2vw">
                                         <div class="mr-4">
                                             <div class="avatar">
-                                                <img src="@Contact.ImageUrl" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
+                                                <img src="@Contact.ImageUrl" loading="eager" alt="pfp" height="50" width="40" style="height: 50px; width: 50px;  color: white; display: flex; justify-content: center; align-items: center; border-radius: 50%;" />
                                             </div>
                                         </div>
                                         <div>
