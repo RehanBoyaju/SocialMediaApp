@@ -5,6 +5,11 @@ using BlazorChatWasm.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Blazored.LocalStorage;
 using Blazored.Modal;
+using BlazorChatWasm.Services.Handler;
+using Microsoft.Extensions.DependencyInjection;
+using System.Net.Http;
+using Microsoft.Extensions.Http;
+
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -14,7 +19,18 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri("http://localhost:5085") });
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorizationCore();
+builder.Services.AddScoped<CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
+//builder.Services.AddScoped<AuthenticatedHttpClientHandler>();
+
+//builder.Services.AddHttpClient("AuthenticatedClient", client =>
+//{
+//    client.BaseAddress = new Uri("http://localhost:5085");
+//})
+//.AddHttpMessageHandler<AuthenticatedHttpClientHandler>();
+
+
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddBlazoredModal();
 builder.Services.AddTransient<ChatService>();
@@ -23,7 +39,6 @@ builder.Services.AddScoped<FriendsService>();
 builder.Services.AddScoped<GroupService>();
 builder.Services.AddScoped<FriendRequestService>();
 builder.Services.AddScoped<GroupRequestService>();
-
 
 
 await builder.Build().RunAsync();

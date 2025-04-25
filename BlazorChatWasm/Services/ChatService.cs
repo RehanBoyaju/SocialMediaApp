@@ -4,7 +4,6 @@ using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using BlazorChatWasm.Services;
 using System.Net.Http;
-using static System.Net.Mime.MediaTypeNames;
 using BlazorChatWasm.Models.DTOs;
 using BlazorChatWasm.Models.Auth;
 using System.Text.Json.Nodes;

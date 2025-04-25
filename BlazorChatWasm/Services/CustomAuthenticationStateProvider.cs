@@ -14,12 +14,13 @@ namespace BlazorChatWasm.Services
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
-        private readonly HttpClient httpClient;
-        private readonly ISyncLocalStorageService localStorage;
 
-        public CustomAuthenticationStateProvider(HttpClient httpClient, ISyncLocalStorageService localStorage)
+        private readonly HttpClient httpClient;
+        public readonly ISyncLocalStorageService localStorage;
+
+        public CustomAuthenticationStateProvider(HttpClient http, ISyncLocalStorageService localStorage)
         {
-            this.httpClient = httpClient;
+            this.httpClient = http;
             this.localStorage = localStorage;
 
             var accessToken = localStorage.GetItem<string>("accessToken");
@@ -271,6 +272,35 @@ namespace BlazorChatWasm.Services
             httpClient.DefaultRequestHeaders.Authorization = null;
             NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
         }
+        public async Task<bool> TryRefreshTokenAsync()
+        {
+            var refreshToken = localStorage.GetItem<string>("refreshToken");
+            if (string.IsNullOrWhiteSpace(refreshToken)) return false;
+
+            var response = await httpClient.PostAsJsonAsync("refresh-token", new { RefreshToken = refreshToken });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Logout(); // clear tokens
+                return false;
+            }
+
+            var jsonResponse = JsonNode.Parse(await response.Content.ReadAsStringAsync());
+            var newAccessToken = jsonResponse?["accessToken"]?.ToString();
+            var newRefreshToken = jsonResponse?["refreshToken"]?.ToString();
+
+            if (string.IsNullOrEmpty(newAccessToken)) return false;
+
+            localStorage.SetItem("accessToken", newAccessToken);
+            if (!string.IsNullOrEmpty(newRefreshToken))
+                localStorage.SetItem("refreshToken", newRefreshToken);
+
+            httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", newAccessToken);
+            NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
+
+            return true;
+        }
+
     }
 
 
