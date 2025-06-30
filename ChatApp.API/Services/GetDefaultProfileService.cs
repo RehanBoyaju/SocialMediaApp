@@ -4,14 +4,19 @@
     public static class GetDefaultProfileService
     {
         private static string DefaultImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "default.jpg");
+        private static string DefaultGroupImagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images", "Group.png");
 
         public static string DefaultProfile()
         {
-            return ImageBytesToStringService.GetProfileFromBytes(DefaultProfileBytes());
+            return ImageBytesToStringService.GetProfileFromBytes(DefaultProfileBytes(DefaultImagePath));
         }
-        private static byte[] DefaultProfileBytes()
+        public static string DefaultGroupProfile()
         {
-              return File.Exists(DefaultImagePath)? File.ReadAllBytes(DefaultImagePath) : [];
+            return ImageBytesToStringService.GetProfileFromBytes(DefaultProfileBytes(DefaultGroupImagePath));
+        }
+        private static byte[] DefaultProfileBytes(string path)
+        {
+              return File.Exists(path)? File.ReadAllBytes(path) : [];
         }
     }
 }

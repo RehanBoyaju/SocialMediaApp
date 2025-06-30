@@ -501,7 +501,7 @@ else
         else
         {
 
-            if (ChatUsers != null)
+            if (ChatUsers!=null && ChatUsers.Count>0)
             {
                 await LoadUserChatAsync(ChatUsers.First().Id);
             }

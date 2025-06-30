@@ -49,12 +49,31 @@ namespace ChatApp.API.Controllers
         [HttpPost("register")]
         public async Task<Results<Ok, ValidationProblem>> Register([FromBody] RegisterModel model)
         {
+            var existingUser = await _context.Users
+                            .Where(u => u.Email == model.Email || u.UserName == model.Username)
+                            .Select(u => new { u.Email, u.UserName })
+                            .FirstOrDefaultAsync();
+
+            if (existingUser != null)
+            {
+                var errors = new Dictionary<string, string[]>();
+
+                if (existingUser.Email == model.Email)
+                    errors.Add(nameof(model.Email), new[] { "Email is already taken." });
+
+                if (existingUser.UserName == model.Username)
+                    errors.Add(nameof(model.Username), new[] { "Username is already taken." });
+
+                return TypedResults.ValidationProblem(errors);
+            }
             var user = new ApplicationUser
             {
                 UserName = model.Username,
                 Email = model.Email,
                 ImageUrl = model.ImageUrl ?? GetDefaultProfileService.DefaultProfile()
             };
+            
+            
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (!result.Succeeded)

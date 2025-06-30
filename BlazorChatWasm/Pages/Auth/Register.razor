@@ -96,7 +96,7 @@
     InputModel Input = new InputModel();
     private string? Message => Input.Errors is null || Input.Errors.Length == 0 ? null : $"Error: {string.Join(", ", Input.Errors)}";
 
-    [SupplyParameterFromQuery]
+    // [SupplyParameterFromQuery]
     public string? ReturnUrl { get; set; } = "/"; // Ensure it's public and has a default value
 
     private async Task RegisterAsync()
@@ -117,7 +117,7 @@
 
             if (result.Succeeded)
             {
-                NavigationManager.NavigateTo(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+                NavigationManager.NavigateTo("/");
             }
             else
             {

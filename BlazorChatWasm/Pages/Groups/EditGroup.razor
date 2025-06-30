@@ -135,8 +135,10 @@
                                         You
                                     </button>
                                 </li>
-                                @foreach (var member in CurrentGroup.Members)
+                                @foreach (var memberId in UpdateGroup.MemberIds)
                                 {
+                                    var member = CurrentGroup.Members.FirstOrDefault(m => m.Id == memberId)??Friends.FirstOrDefault(f=>f.Id == memberId);
+
                                     if (member != null)
                                     {
                                         if (member.Id == User.Id)
@@ -150,7 +152,7 @@
                                                     <img src="@member.ImageUrl" class="rounded-circle me-3" width="40" height="40" />
                                                     <span>@member.UserName</span>
                                                 </div>
-                                                <button type="button" class="btn btn-danger btn-sm" style="width:15%" @onclick="@(() => RemoveMember(member.Id))">
+                                                <button type="button" class="btn btn-danger btn-sm"  @onclick="@(() => RemoveMember(member.Id))">
                                                     Remove
                                                 </button>
                                             </li>
@@ -167,7 +169,6 @@
                 @if (!string.IsNullOrEmpty(ReturnUrl))
                 {
                     <a href="@ReturnUrl" class="btn btn-outline-danger mt-2 w-100" role="button">Cancel</a>
-
                 }
                 else
                 {

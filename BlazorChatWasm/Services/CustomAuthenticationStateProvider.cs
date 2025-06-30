@@ -1,14 +1,10 @@
-﻿using BlazorChatWasm.Models;
-using BlazorChatWasm.Models.Auth;
+﻿using BlazorChatWasm.Models.Auth;
 using Blazored.LocalStorage;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Identity;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json.Nodes;
-using static BlazorChatWasm.Pages.Auth.ProfileModal;
 
 namespace BlazorChatWasm.Services
 {

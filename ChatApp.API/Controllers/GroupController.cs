@@ -180,7 +180,7 @@ namespace ChatApp.API.Controllers
             }
         }
 
-        [HttpPost]
+        [HttpPost("create")]
         public async Task<IActionResult> CreateGroupAsync(Group createGroup)
         {
             try
@@ -192,6 +192,10 @@ namespace ChatApp.API.Controllers
                 //    Description = createGroup.Description,
                 //    MemberIds = createGroup.MemberIds
                 //};
+                if(string.IsNullOrEmpty(createGroup.ImageUrl))
+                {
+                    createGroup.ImageUrl = GetDefaultProfileService.DefaultGroupProfile();
+                }
                 await Context.Groups.AddAsync(createGroup);
                 await Context.SaveChangesAsync(); // Ensures group.Id is available
 

@@ -92,7 +92,7 @@ namespace BlazorChatWasm.Services
         }
         public async Task<FormResult> AddGroup(Group group)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/group", group);
+            var response = await _httpClient.PostAsJsonAsync("api/group/create", group);
             if (response.IsSuccessStatusCode)
             {
                 return new FormResult { Succeeded = true, Errors = null };
