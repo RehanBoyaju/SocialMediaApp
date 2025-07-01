@@ -29,4 +29,4 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ChatApp.API.dll"]
 
-#docker run -d -p 5085:8080 chatapp-api:1.1
+#docker run -d -p 5085:8080 --name backend chatapp-api:1.1
